@@ -5,8 +5,8 @@ import ItemContent from './components/ItemContent.vue'
 import './styles/shared.css'
 import AddFeedModal from './components/modals/AddFeedModal.vue'
 import DeleteFeedModal from './components/modals/DeleteFeedModal.vue'
-import { useItems } from './composables/useItems'
-import { useFeeds } from './composables/useFeeds'
+import { itemStore } from './stores/itemStore'
+import { feedStore } from './stores/feedStore'
 import { useItemSSE } from './composables/api/useItemSSE'
 
 useItemSSE()
@@ -15,8 +15,6 @@ const {
   activeFeed,
   showAddModal,
   showDeleteModal,
-  feedFilter,
-  feeds,
   filteredFeeds,
   feedsLoading,
   feedsError,
@@ -30,12 +28,9 @@ const {
   viewAll,
   viewUnread,
   viewFavorites,
-} = useFeeds()
+} = feedStore()
 
 const {
-  items,
-  itemsLoading,
-  itemsError,
   activeItem,
   handleMarkReadItem,
   handleFavoriteItem,
@@ -43,11 +38,12 @@ const {
   handleMarkAllRead,
   handleRefreshItems,
   handleOpenLink,
-} = useItems(activeFeed, feedFilter, feeds)
+  loadMore,
+} = itemStore()
 
 const handleRefresh = () => {
   handleRefreshFeeds()
-  handleRefreshItems
+  handleRefreshItems()
 }
 </script>
 
@@ -66,14 +62,7 @@ const handleRefresh = () => {
       @unread="viewUnread"
       @favorite="viewFavorites"
     />
-    <ItemsTab
-      :items="items ?? []"
-      :loading="itemsLoading"
-      :error="itemsError"
-      :activeItem="activeItem"
-      @select="handleSelectItem"
-      @markAllRead="handleMarkAllRead"
-    />
+    <ItemsTab @select="handleSelectItem" @markAllRead="handleMarkAllRead" @loadMore="loadMore" />
     <ItemContent
       v-if="activeItem"
       :item="activeItem"
