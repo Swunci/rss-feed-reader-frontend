@@ -1,8 +1,8 @@
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, type Ref } from 'vue'
 
 interface ScrollOptions {
-  loading: boolean
-  hasMore: boolean
+  loading: Ref<boolean>
+  hasMore: Ref<boolean>
   rootSelector?: string // Optional: target container selector
   rootMargin?: string // Optional: margin buffer
 }
@@ -17,7 +17,7 @@ export function useInfiniteScroll(onLoadMore: () => void, options: ScrollOptions
     observer = new IntersectionObserver(
       ([entry]) => {
         // Trigger only if visible, not loading, and more data is left
-        if (entry?.isIntersecting && !options.loading && options.hasMore) {
+        if (entry?.isIntersecting && !options.loading.value && options.hasMore.value) {
           onLoadMore()
         }
       },
@@ -38,5 +38,5 @@ export function useInfiniteScroll(onLoadMore: () => void, options: ScrollOptions
     if (observer) observer.disconnect()
   })
 
-  return { sentinelRef, setupObserver }
+  return { sentinelRef }
 }

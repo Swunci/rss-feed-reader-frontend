@@ -4,19 +4,22 @@ import ActionsBar from './ActionsBar.vue'
 import type { Item } from '@/types/item'
 import { formatRelativeTime } from '@/utils/date'
 import { LoaderCircleIcon } from 'lucide-vue-next'
-
-defineProps<{
-  items: Item[]
-  activeItem: Item | null
-  loading: boolean
-  error: string | null
-}>()
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+import { itemStore } from '@/stores/itemStore'
 
 const emit = defineEmits<{
   select: [item: Item]
   markAllRead: []
   loadMore: []
 }>()
+
+const { items, activeItem, itemsLoading, hasMore, loadMore } = itemStore()
+
+const { sentinelRef } = useInfiniteScroll(loadMore, {
+  loading: itemsLoading,
+  hasMore: hasMore,
+  rootSelector: '.items-list',
+})
 </script>
 
 <template>
@@ -40,8 +43,8 @@ const emit = defineEmits<{
         </div>
         <p class="news-date">{{ formatRelativeTime(item.publishedAt) }}</p>
       </div>
-      <div ref="bottomSentinel" class="sentinel">
-        <div v-if="loading" class="scroll-status">
+      <div ref="sentinelRef" class="sentinel">
+        <div v-if="itemsLoading" class="scroll-status">
           <LoaderCircleIcon :size="30" class="spinner" />
         </div>
       </div>
