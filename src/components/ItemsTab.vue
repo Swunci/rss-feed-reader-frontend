@@ -4,22 +4,22 @@ import ActionsBar from './ActionsBar.vue'
 import type { Item } from '@/types/item'
 import { formatRelativeTime } from '@/utils/date'
 import { LoaderCircleIcon } from 'lucide-vue-next'
-import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+
 import { itemStore } from '@/stores/itemStore'
+import { feedStore } from '@/stores/feedStore'
+import { vInfiniteScroll } from '@vueuse/components'
 
 const emit = defineEmits<{
   select: [item: Item]
   markAllRead: []
   loadMore: []
 }>()
-
+const { activeFeed } = feedStore()
 const { items, activeItem, itemsLoading, hasMore, loadMore } = itemStore()
 
-const { sentinelRef } = useInfiniteScroll(loadMore, {
-  loading: itemsLoading,
-  hasMore: hasMore,
-  rootSelector: '.items-list',
-})
+const canLoadMore = () => {
+  return hasMore.value && activeFeed.value != null
+}
 </script>
 
 <template>
@@ -29,7 +29,7 @@ const { sentinelRef } = useInfiniteScroll(loadMore, {
         <CheckCheckIcon :size="25" />
       </button>
     </ActionsBar>
-    <div class="items-list">
+    <div class="items-list" v-infinite-scroll="[loadMore, { distance: 200, canLoadMore }]">
       <div
         v-for="item in items"
         :key="item.id"
@@ -43,10 +43,8 @@ const { sentinelRef } = useInfiniteScroll(loadMore, {
         </div>
         <p class="news-date">{{ formatRelativeTime(item.publishedAt) }}</p>
       </div>
-      <div ref="sentinelRef" class="sentinel">
-        <div v-if="itemsLoading" class="scroll-status">
-          <LoaderCircleIcon :size="30" class="spinner" />
-        </div>
+      <div v-if="itemsLoading" class="scroll-status">
+        <LoaderCircleIcon :size="30" class="spinner" />
       </div>
     </div>
   </div>

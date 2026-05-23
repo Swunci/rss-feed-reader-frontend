@@ -158,6 +158,14 @@ const handleRefreshItems = async () => {
 }
 
 const loadMore = async () => {
+  console.log(
+    'loadMore called, activeFeed:',
+    activeFeed.value,
+    'hasMore:',
+    hasMore.value,
+    'loading:',
+    itemsLoading.value,
+  )
   if (activeFeed.value == null || !hasMore.value || itemsLoading.value) return
   await getItemsFromAPI(activeFeed.value, feedFilter.value, cursor.value)
 }

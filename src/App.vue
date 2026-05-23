@@ -15,9 +15,6 @@ const {
   activeFeed,
   showAddModal,
   showDeleteModal,
-  filteredFeeds,
-  feedsLoading,
-  feedsError,
   loadingFeed,
   feedError,
   loadingDeleteFeed,
@@ -50,10 +47,6 @@ const handleRefresh = () => {
 <template>
   <div class="app-layout">
     <FeedSideTab
-      :feeds="filteredFeeds ?? []"
-      :loading="feedsLoading"
-      :error="feedsError"
-      :activeFeed="activeFeed"
       @select="activeFeed = $event"
       @add="showAddModal = true"
       @delete="activeFeed && (showDeleteModal = true)"

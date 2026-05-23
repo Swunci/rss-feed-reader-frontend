@@ -10,14 +10,9 @@ import {
 } from 'lucide-vue-next'
 import ActionsBar from './ActionsBar.vue'
 import type { Feed } from '@/types/feed'
+import { feedStore } from '@/stores/feedStore'
 
-defineProps<{
-  feeds: Feed[]
-  activeFeed: Feed | null
-  loading: boolean
-  error: string | null
-}>()
-
+const { feeds, activeFeed, feedFilter } = feedStore()
 const emit = defineEmits<{
   select: [feed: Feed]
   unread: []
@@ -32,13 +27,25 @@ const emit = defineEmits<{
 <template>
   <div class="feed-tab">
     <ActionsBar>
-      <button class="icon-btn" @click="emit('all')" title="All">
+      <button
+        :class="['icon-btn', feedFilter === 'all' ? 'active' : '']"
+        @click="emit('all')"
+        title="All"
+      >
         <LayersIcon />
       </button>
-      <button class="icon-btn" @click="emit('unread')" title="Unread">
+      <button
+        :class="['icon-btn', feedFilter === 'unread' ? 'active' : '']"
+        @click="emit('unread')"
+        title="Unread"
+      >
         <EyeOffIcon />
       </button>
-      <button class="icon-btn" @click="emit('favorite')" title="Favorite">
+      <button
+        :class="['icon-btn', feedFilter === 'favorite' ? 'active' : '']"
+        @click="emit('favorite')"
+        title="Favorite"
+      >
         <BookHeartIcon />
       </button>
       <button class="icon-btn" @click="emit('add')" title="Add feed">
@@ -106,5 +113,9 @@ const emit = defineEmits<{
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.icon-btn.active {
+  color: #ffffff;
+  background: #418dff;
 }
 </style>
