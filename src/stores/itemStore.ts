@@ -7,6 +7,7 @@ import { usePatch } from '../composables/api/usePatch'
 import { endpoints } from '@/api/endpoints'
 import { useToast } from 'vue-toastification'
 import { feedStore } from './feedStore'
+import { useItemSSE } from '@/composables/api/useItemSSE'
 
 const { activeFeed, feedFilter, feeds } = feedStore()
 
@@ -25,6 +26,8 @@ const {
 const { patchData: patchItem } = usePatch()
 const { patchData: patchItemAllRead } = usePatch()
 
+const { itemEvent } = useItemSSE()
+
 const getItemsFromAPI = async (activeFeed: Feed | null, feedFilter: string, cursorVal: string) => {
   if (activeFeed == null) return
   console.log('filter: %s, activeFeed: %s', feedFilter, JSON.stringify(activeFeed))
@@ -38,9 +41,31 @@ const getItemsFromAPI = async (activeFeed: Feed | null, feedFilter: string, curs
     default:
       await fetchItems(endpoints.items.getByFeed(activeFeed.id, cursorVal))
   }
+}
+
+const appendNewItems = () => {
   if (fetchedItems.value) {
     items.value = [...items.value, ...fetchedItems.value]
-    if (fetchedItems.value.length < 20) hasMore.value = false
+    if (fetchedItems.value.length < 50) {
+      hasMore.value = false
+      return
+    }
+    cursor.value = fetchedItems.value.at(-1)!.publishedAt
+    console.log(`updating cursor ${cursor.value}`)
+  }
+}
+
+const mergeNewItems = () => {
+  if (fetchedItems.value) {
+    if (items.value.length === 0) {
+      appendNewItems()
+    } else {
+      const latestItem = items.value[0]
+      items.value = [
+        ...fetchedItems.value.filter((item) => item.publishedAt > latestItem!.publishedAt),
+        ...items.value,
+      ]
+    }
   }
 }
 
@@ -57,13 +82,14 @@ watch([activeFeed, feedFilter], async ([activeFeedValue]) => {
   hasMore.value = true
   activeItem.value = null
   await getItemsFromAPI(activeFeedValue, feedFilter.value, cursor.value)
+  appendNewItems()
 })
 
-watch(fetchedItems, () => {
-  const fetched = fetchedItems.value
-  if (!fetched || fetched.length === 0) return
-  cursor.value = fetched.at(-1)?.publishedAt || ''
-  console.log(`updating cursor ${cursor.value}`)
+watch(itemEvent, async () => {
+  if (itemEvent.value?.feedId === activeFeed.value?.id) {
+    await getItemsFromAPI(activeFeed.value, feedFilter.value, '')
+    mergeNewItems()
+  }
 })
 
 const handleSelectItem = async (item: Item) => {
@@ -155,6 +181,7 @@ const handleRefreshItems = async () => {
   items.value = []
   hasMore.value = true
   await getItemsFromAPI(activeFeed.value, feedFilter.value, cursor.value)
+  appendNewItems()
 }
 
 const loadMore = async () => {
@@ -168,6 +195,7 @@ const loadMore = async () => {
   )
   if (activeFeed.value == null || !hasMore.value || itemsLoading.value) return
   await getItemsFromAPI(activeFeed.value, feedFilter.value, cursor.value)
+  appendNewItems()
 }
 
 export function itemStore() {
