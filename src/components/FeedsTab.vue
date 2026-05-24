@@ -27,27 +27,30 @@ const emit = defineEmits<{
 <template>
   <div class="feed-tab">
     <ActionsBar>
-      <button
-        :class="['icon-btn', feedFilter === 'all' ? 'active' : '']"
-        @click="emit('all')"
-        title="All"
-      >
-        <LayersIcon />
-      </button>
-      <button
-        :class="['icon-btn', feedFilter === 'unread' ? 'active' : '']"
-        @click="emit('unread')"
-        title="Unread"
-      >
-        <EyeOffIcon />
-      </button>
-      <button
-        :class="['icon-btn', feedFilter === 'favorite' ? 'active' : '']"
-        @click="emit('favorite')"
-        title="Favorite"
-      >
-        <BookHeartIcon />
-      </button>
+      <div class="filter-group">
+        <button
+          :class="['icon-btn', feedFilter === 'all' ? 'active' : '']"
+          @click="emit('all')"
+          title="All"
+        >
+          <LayersIcon />
+        </button>
+        <button
+          :class="['icon-btn', feedFilter === 'unread' ? 'active' : '']"
+          @click="emit('unread')"
+          title="Unread"
+        >
+          <EyeOffIcon />
+        </button>
+        <button
+          :class="['icon-btn', feedFilter === 'favorite' ? 'active' : '']"
+          @click="emit('favorite')"
+          title="Favorite"
+        >
+          <BookHeartIcon />
+        </button>
+      </div>
+
       <button class="icon-btn" @click="emit('add')" title="Add feed">
         <PlusIcon />
       </button>
@@ -117,5 +120,13 @@ const emit = defineEmits<{
 .icon-btn.active {
   color: #ffffff;
   background: #418dff;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 6px;
+  padding: 2px;
 }
 </style>

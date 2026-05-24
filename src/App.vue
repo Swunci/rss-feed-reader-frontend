@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FeedSideTab from './components/FeedSideTab.vue'
+import FeedSideTab from './components/FeedsTab.vue'
 import ItemsTab from './components/ItemsTab.vue'
 import ItemContent from './components/ItemContent.vue'
 import './styles/shared.css'

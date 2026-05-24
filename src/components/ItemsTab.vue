@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCheckIcon } from 'lucide-vue-next'
+import { CheckCheckIcon, SearchIcon } from 'lucide-vue-next'
 import ActionsBar from './ActionsBar.vue'
 import type { Item } from '@/types/item'
 import { formatRelativeTime } from '@/utils/date'
@@ -8,6 +8,9 @@ import { LoaderCircleIcon } from 'lucide-vue-next'
 import { itemStore } from '@/stores/itemStore'
 import { feedStore } from '@/stores/feedStore'
 import { vInfiniteScroll } from '@vueuse/components'
+import { computed, ref } from 'vue'
+import { refDebounced } from '@vueuse/core'
+import Fuse from 'fuse.js'
 
 const emit = defineEmits<{
   select: [item: Item]
@@ -20,18 +23,36 @@ const { items, activeItem, itemsLoading, hasMore, loadMore } = itemStore()
 const canLoadMore = () => {
   return hasMore.value && activeFeed.value != null
 }
+
+const searchQuery = ref('')
+
+const debouncedQuery = refDebounced(searchQuery, 500)
+
+const filteredItems = computed(() => {
+  if (debouncedQuery.value.trim().length === 0) return items.value
+  const fuse = new Fuse(items.value, {
+    keys: ['title', 'description'],
+    threshold: 0.3,
+    ignoreLocation: true,
+  })
+  return fuse.search(debouncedQuery.value).map((result) => result.item)
+})
 </script>
 
 <template>
   <div class="items-tab">
     <ActionsBar>
+      <label class="search-row">
+        <SearchIcon :size="14" class="search-icon" />
+        <input class="search-input" type="text" placeholder="Search…" v-model="searchQuery" />
+      </label>
       <button class="icon-btn" @click="emit('markAllRead')" title="Mark all read">
         <CheckCheckIcon :size="25" />
       </button>
     </ActionsBar>
     <div class="items-list" v-infinite-scroll="[loadMore, { distance: 200, canLoadMore }]">
       <div
-        v-for="item in items"
+        v-for="item in filteredItems"
         :key="item.id"
         :class="['news-item', activeItem?.id === item.id ? 'active' : '']"
         @click="emit('select', item)"
@@ -155,5 +176,32 @@ const canLoadMore = () => {
 .spinner {
   animation: spin 1s linear infinite;
   color: #3b82f6; /* Optional: sets the loading circle to a nice blue */
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem;
+}
+
+.search-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+  color: #111827;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
 }
 </style>
