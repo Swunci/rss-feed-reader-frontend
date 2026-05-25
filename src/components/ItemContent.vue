@@ -27,37 +27,41 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="item-tab">
+  <div class="item-content-tab">
     <ActionsBar>
-      <button class="icon-btn" @click="emit('favorite', item.id)" title="Favorite">
-        <HeartPlusIcon v-if="!item.isFavorite" />
-        <HeartMinusIcon v-else />
-      </button>
-      <button
-        class="icon-btn"
-        @click="emit('markRead')"
-        :title="item.isRead ? 'Mark as unread' : 'Mark as read'"
-      >
-        <CircleCheckIcon v-if="!item.isRead" />
-        <CircleMinusIcon v-else />
-      </button>
-      <button class="icon-btn" @click="emit('openLink')" title="Open link">
-        <ExternalLinkIcon />
-      </button>
+      <div class="actions-group">
+        <button class="icon-btn" @click="emit('favorite', item.id)" title="Favorite">
+          <HeartPlusIcon v-if="!item.isFavorite" />
+          <HeartMinusIcon v-else />
+        </button>
+        <button
+          class="icon-btn"
+          @click="emit('markRead')"
+          :title="item.isRead ? 'Mark as unread' : 'Mark as read'"
+        >
+          <CircleCheckIcon v-if="!item.isRead" />
+          <CircleMinusIcon v-else />
+        </button>
+        <button class="icon-btn" @click="emit('openLink')" title="Open link">
+          <ExternalLinkIcon />
+        </button>
+      </div>
     </ActionsBar>
-    <div class="content-wrapper">
-      <h1>
-        <b>{{ item.title }}</b>
-      </h1>
-      <div>{{ feedName }}</div>
-      <div>{{ formatDate(item.publishedAt) }}</div>
-      <div v-html="safeHtml"></div>
+    <div class="scroll-container">
+      <div class="content-wrapper">
+        <h1>
+          <b>{{ item.title }}</b>
+        </h1>
+        <div>{{ feedName }}</div>
+        <div>{{ formatDate(item.publishedAt) }}</div>
+        <div v-html="safeHtml"></div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.item-tab {
+.item-content-tab {
   display: flex;
   flex-direction: column;
   min-width: 200px;
@@ -67,8 +71,23 @@ const emit = defineEmits<{
   flex-grow: 1;
 }
 
-.content-wrapper {
+.scroll-container {
   flex: 1;
   overflow-y: auto;
+}
+
+.content-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0rem 0.5rem;
+  width: 100%;
+}
+
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 6px;
+  padding: 2px;
 }
 </style>
