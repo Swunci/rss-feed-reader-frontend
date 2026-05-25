@@ -7,10 +7,13 @@ import {
   RefreshCwIcon,
   RssIcon,
   BookHeartIcon,
+  EllipsisIcon,
 } from 'lucide-vue-next'
 import ActionsBar from './ActionsBar.vue'
 import type { Feed } from '@/types/feed'
 import { feedStore } from '@/stores/feedStore'
+import DropdownMenu from './DropdownMenu.vue'
+import { ref } from 'vue'
 
 const { feeds, activeFeed, feedFilter } = feedStore()
 const emit = defineEmits<{
@@ -22,11 +25,17 @@ const emit = defineEmits<{
   delete: []
   refresh: []
 }>()
+
+const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
 </script>
 
 <template>
   <div class="feed-tab">
     <ActionsBar>
+      <button class="app-icon">
+        <PlusIcon />
+      </button>
+
       <div class="filter-group">
         <button
           :class="['icon-btn', feedFilter === 'all' ? 'active' : '']"
@@ -51,15 +60,35 @@ const emit = defineEmits<{
         </button>
       </div>
 
-      <button class="icon-btn" @click="emit('add')" title="Add feed">
-        <PlusIcon />
-      </button>
-      <button class="icon-btn" @click="emit('refresh')" title="Refresh">
-        <RefreshCwIcon />
-      </button>
-      <button class="icon-btn danger" @click="emit('delete')" title="Delete">
-        <TrashIcon />
-      </button>
+      <DropdownMenu align="right" ref="dropdownRef">
+        <template #trigger>
+          <button class="icon-btn" title="More">
+            <EllipsisIcon />
+          </button>
+        </template>
+        <button
+          class="dropdown-item"
+          @click="
+            () => {
+              emit('add')
+              dropdownRef?.close()
+            }
+          "
+        >
+          <span class="dropdown-item-icon"><PlusIcon /></span>
+          New Feed
+        </button>
+        <button class="dropdown-item" @click="emit('refresh')" title="Refresh">
+          <span class="dropdown-item-icon"><RefreshCwIcon /></span>
+          Refresh Feeds
+        </button>
+        <button class="dropdown-item danger" @click="emit('delete')" title="Delete">
+          <span class="dropdown-item-icon">
+            <TrashIcon />
+          </span>
+          Delete Feed
+        </button>
+      </DropdownMenu>
     </ActionsBar>
     <div class="feed-list">
       <div
@@ -122,11 +151,48 @@ const emit = defineEmits<{
   background: #418dff;
 }
 
+.app-icon {
+  border-radius: 6px;
+  padding: 2px;
+  visibility: hidden;
+}
+
 .filter-group {
   display: flex;
   align-items: center;
   gap: 0.25rem;
   border-radius: 6px;
   padding: 2px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  white-space: nowrap;
+  padding: 0.5rem 0.5rem;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.dropdown-item:hover {
+  background: #5e9eff;
+  color: #dde2eb;
+}
+
+.dropdown-item.danger:hover {
+  color: #ef4444;
+}
+
+.dropdown-item-icon {
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
 }
 </style>
