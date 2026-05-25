@@ -42,6 +42,11 @@ const handleRefresh = () => {
   handleRefreshFeeds()
   handleRefreshItems()
 }
+
+const clearAddModal = () => {
+  showAddModal.value = false
+  feedError.value = null
+}
 </script>
 
 <template>
@@ -68,7 +73,7 @@ const handleRefresh = () => {
       v-if="showAddModal"
       :loading="loadingFeed"
       :error="feedError"
-      @close="showAddModal = false"
+      @close="clearAddModal"
       @submit="handleAddFeed"
     />
     <DeleteFeedModal
