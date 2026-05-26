@@ -181,6 +181,7 @@ const filteredItems = computed(() => {
 .search-row {
   display: flex;
   align-items: center;
+  min-width: 0;
   width: 100%;
   gap: 0.4rem;
   padding: 0.4rem 0.5rem;
