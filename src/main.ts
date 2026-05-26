@@ -5,7 +5,7 @@ import 'vue-toastification/dist/index.css'
 
 const app = createApp(App)
 app.use(Toast, {
-  position: 'bottom-right',
+  position: POSITION.BOTTOM_CENTER,
   closeOnClick: true,
   pauseOnHover: true,
   draggable: true,

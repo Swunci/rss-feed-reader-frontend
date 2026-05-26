@@ -8,20 +8,28 @@ import DeleteFeedModal from './components/modals/DeleteFeedModal.vue'
 import { itemStore } from './stores/itemStore'
 import { feedStore } from './stores/feedStore'
 import { useItemSSE } from './composables/api/useItemSSE'
+import RenameFeedModal from './components/modals/RenameFeedModal.vue'
+import { useToast } from 'vue-toastification'
 
 useItemSSE()
+
+const toast = useToast()
 
 const {
   activeFeed,
   showAddModal,
   showDeleteModal,
+  showRenameModal,
   loadingFeed,
-  feedError,
+  postFeedError,
   loadingDeleteFeed,
   deleteFeedError,
+  loadingPatchFeed,
+  patchFeedError,
   handleAddFeed,
   handleDeleteFeed,
   handleRefreshFeeds,
+  handleRenameFeed,
   viewAll,
   viewUnread,
   viewFavorites,
@@ -45,7 +53,17 @@ const handleRefresh = () => {
 
 const clearAddModal = () => {
   showAddModal.value = false
-  feedError.value = null
+  postFeedError.value = null
+}
+
+const clearDeleteModal = () => {
+  showDeleteModal.value = false
+  deleteFeedError.value = null
+}
+
+const clearRenameModal = () => {
+  showRenameModal.value = false
+  patchFeedError.value = null
 }
 </script>
 
@@ -54,8 +72,9 @@ const clearAddModal = () => {
     <FeedSideTab
       @select="activeFeed = $event"
       @add="showAddModal = true"
-      @delete="activeFeed && (showDeleteModal = true)"
+      @delete="activeFeed ? (showDeleteModal = true) : toast.error('No feed selected')"
       @refresh="handleRefresh"
+      @rename="activeFeed ? (showRenameModal = true) : toast.error('No feed selected')"
       @all="viewAll"
       @unread="viewUnread"
       @favorite="viewFavorites"
@@ -72,7 +91,7 @@ const clearAddModal = () => {
     <AddFeedModal
       v-if="showAddModal"
       :loading="loadingFeed"
-      :error="feedError"
+      :error="postFeedError"
       @close="clearAddModal"
       @submit="handleAddFeed"
     />
@@ -81,8 +100,15 @@ const clearAddModal = () => {
       :feed="activeFeed"
       :loading="loadingDeleteFeed"
       :error="deleteFeedError"
-      @close="showDeleteModal = false"
+      @close="clearDeleteModal"
       @confirm="handleDeleteFeed"
+    />
+    <RenameFeedModal
+      v-if="showRenameModal && activeFeed"
+      :loading="loadingPatchFeed"
+      :error="patchFeedError"
+      @close="clearRenameModal"
+      @submit="handleRenameFeed"
     />
   </div>
 </template>

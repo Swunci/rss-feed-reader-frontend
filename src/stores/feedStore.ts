@@ -5,10 +5,12 @@ import { useFetch } from '../composables/api/useFetch'
 import { usePost } from '../composables/api/usePost'
 import { endpoints } from '@/api/endpoints'
 import { useItemSSE } from '../composables/api/useItemSSE'
+import { usePatch } from '@/composables/api/usePatch'
 
 const activeFeed = ref<Feed | null>(null)
 const showAddModal = ref(false)
 const showDeleteModal = ref(false)
+const showRenameModal = ref(false)
 const feedFilter = ref<FeedFilter>('all')
 
 const { itemEvent } = useItemSSE()
@@ -19,7 +21,14 @@ const {
   error: feedsError,
   fetchData: fetchFeeds,
 } = useFetch<Feed[]>()
-const { data: feed, loading: loadingFeed, error: feedError, postData: postFeed } = usePost<Feed>()
+const {
+  data: feed,
+  loading: loadingFeed,
+  error: postFeedError,
+  postData: postFeed,
+} = usePost<Feed>()
+
+const { loading: loadingPatchFeed, error: patchFeedError, patchData: patchFeed } = usePatch()
 const { loading: loadingDeleteFeed, error: deleteFeedError, deleteData: deleteFeed } = useDelete()
 
 const filteredFeeds = computed(() => {
@@ -61,6 +70,19 @@ const handleDeleteFeed = async () => {
   }
 }
 
+const handleRenameFeed = async (newName: string) => {
+  const success = await patchFeed(endpoints.feeds.update(activeFeed.value!.id), { name: newName })
+  if (success) {
+    showRenameModal.value = false
+    feeds.value = feeds.value!.map((f) => {
+      if (f.id === activeFeed.value?.id) {
+        f.name = newName
+      }
+      return f
+    })
+  }
+}
+
 const handleRefreshFeeds = async () => {
   const success = await postFeed(endpoints.feeds.refreshAll, {})
   if (success) {
@@ -98,18 +120,22 @@ export function feedStore() {
     activeFeed,
     showAddModal,
     showDeleteModal,
+    showRenameModal,
     feedFilter,
     feeds,
     filteredFeeds,
     feedsLoading,
     feedsError,
     loadingFeed,
-    feedError,
+    postFeedError,
     loadingDeleteFeed,
     deleteFeedError,
+    loadingPatchFeed,
+    patchFeedError,
     handleAddFeed,
     handleDeleteFeed,
     handleRefreshFeeds,
+    handleRenameFeed,
     viewAll,
     viewUnread,
     viewFavorites,

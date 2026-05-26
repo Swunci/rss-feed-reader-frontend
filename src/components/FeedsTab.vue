@@ -5,6 +5,7 @@ import {
   PlusIcon,
   TrashIcon,
   RefreshCwIcon,
+  SquarePenIcon,
   RssIcon,
   BookHeartIcon,
   EllipsisIcon,
@@ -24,6 +25,7 @@ const emit = defineEmits<{
   add: []
   delete: []
   refresh: []
+  rename: []
 }>()
 
 const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
@@ -78,11 +80,15 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
           <span class="dropdown-item-icon"><PlusIcon /></span>
           New Feed
         </button>
-        <button class="dropdown-item" @click="emit('refresh')" title="Refresh">
+        <button class="dropdown-item" @click="emit('refresh')">
           <span class="dropdown-item-icon"><RefreshCwIcon /></span>
           Refresh Feeds
         </button>
-        <button class="dropdown-item danger" @click="emit('delete')" title="Delete">
+        <button class="dropdown-item" @click="emit('rename')">
+          <span class="dropdown-item-icon"><SquarePenIcon /></span>
+          Rename Feed
+        </button>
+        <button class="dropdown-item danger" @click="emit('delete')">
           <span class="dropdown-item-icon">
             <TrashIcon />
           </span>

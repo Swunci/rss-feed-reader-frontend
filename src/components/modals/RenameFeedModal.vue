@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { feedStore } from '@/stores/feedStore'
 import { ref } from 'vue'
 
 defineProps<{
@@ -8,28 +9,28 @@ defineProps<{
 
 const emit = defineEmits<{
   close: []
-  submit: [url: string]
+  submit: [name: string]
 }>()
-
-const url = ref('')
+const { activeFeed } = feedStore()
+const name = ref('')
 </script>
 
 <template>
   <div class="modal-overlay" @click.self="emit('close')">
     <div class="modal">
-      <h2 class="modal-title">Add RSS feed</h2>
+      <h2 class="modal-title">Rename feed</h2>
       <input
-        v-model="url"
+        v-model="name"
         class="modal-input"
-        type="url"
-        placeholder="https://example.com/feed.xml"
-        @keyup.enter="emit('submit', url)"
+        type="text"
+        :placeholder="activeFeed?.name"
+        @keyup.enter="emit('submit', name)"
       />
-      <p v-if="error" class="modal-error">Invalid RSS feed link</p>
+      <p v-if="error" class="modal-error">Failed to rename</p>
       <div class="modal-actions">
         <button class="modal-btn cancel" @click="emit('close')">Cancel</button>
-        <button class="modal-btn confirm" :disabled="loading" @click="emit('submit', url)">
-          {{ loading ? 'Adding...' : 'Add' }}
+        <button class="modal-btn confirm" :disabled="loading" @click="emit('submit', name)">
+          {{ loading ? 'Renaming...' : 'Rename' }}
         </button>
       </div>
     </div>
