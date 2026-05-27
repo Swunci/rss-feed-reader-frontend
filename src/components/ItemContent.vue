@@ -77,10 +77,9 @@ const emit = defineEmits<{
 }
 
 .content-wrapper {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0rem 0.5rem;
-  width: 100%;
 }
 
 .actions-group {

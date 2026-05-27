@@ -10,17 +10,35 @@ import { feedStore } from './stores/feedStore'
 import { useItemSSE } from './composables/api/useItemSSE'
 import RenameFeedModal from './components/modals/RenameFeedModal.vue'
 import { useToast } from 'vue-toastification'
+import AddCollectionModal from './components/modals/AddCollectionModal.vue'
+import { collectionStore } from './stores/collectionStore'
 
 useItemSSE()
 
 const toast = useToast()
 
 const {
+  activeCollection,
+  showAddCollectionModal,
+  showDeleteCollectionModal,
+  showRenameCollectionModal,
+  collectionsLoading,
+  collectionsError,
+  PostCollectionError,
+  loadingPostCollection,
+  patchCollectionError,
+  loadingPatchCollection,
+  deleteCollectionError,
+  loadingDeleteCollection,
+  handleAddCollection,
+} = collectionStore()
+
+const {
   activeFeed,
-  showAddModal,
-  showDeleteModal,
-  showRenameModal,
-  loadingFeed,
+  showAddFeedModal,
+  showDeleteFeedModal,
+  showRenameFeedModal,
+  loadingPostFeed,
   postFeedError,
   loadingDeleteFeed,
   deleteFeedError,
@@ -52,18 +70,24 @@ const handleRefresh = () => {
 }
 
 const clearAddModal = () => {
-  showAddModal.value = false
+  showAddFeedModal.value = false
   postFeedError.value = null
+  showAddCollectionModal.value = false
+  PostCollectionError.value = null
 }
 
 const clearDeleteModal = () => {
-  showDeleteModal.value = false
+  showDeleteFeedModal.value = false
   deleteFeedError.value = null
+  showDeleteCollectionModal.value = false
+  deleteCollectionError.value = null
 }
 
 const clearRenameModal = () => {
-  showRenameModal.value = false
+  showRenameFeedModal.value = false
   patchFeedError.value = null
+  showRenameCollectionModal.value = false
+  patchCollectionError.value = null
 }
 </script>
 
@@ -71,10 +95,11 @@ const clearRenameModal = () => {
   <div class="app-layout">
     <FeedSideTab
       @select="activeFeed = $event"
-      @add="showAddModal = true"
-      @delete="activeFeed ? (showDeleteModal = true) : toast.error('No feed selected')"
+      @addFeed="showAddFeedModal = true"
+      @addCollection="showAddCollectionModal = true"
+      @delete="activeFeed ? (showDeleteFeedModal = true) : toast.error('No feed selected')"
       @refresh="handleRefresh"
-      @rename="activeFeed ? (showRenameModal = true) : toast.error('No feed selected')"
+      @rename="activeFeed ? (showRenameFeedModal = true) : toast.error('No feed selected')"
       @all="viewAll"
       @unread="viewUnread"
       @favorite="viewFavorites"
@@ -89,14 +114,14 @@ const clearRenameModal = () => {
       @openLink="handleOpenLink"
     />
     <AddFeedModal
-      v-if="showAddModal"
-      :loading="loadingFeed"
+      v-if="showAddFeedModal"
+      :loading="loadingPostFeed"
       :error="postFeedError"
       @close="clearAddModal"
       @submit="handleAddFeed"
     />
     <DeleteFeedModal
-      v-if="showDeleteModal && activeFeed"
+      v-if="showDeleteFeedModal && activeFeed"
       :feed="activeFeed"
       :loading="loadingDeleteFeed"
       :error="deleteFeedError"
@@ -104,11 +129,18 @@ const clearRenameModal = () => {
       @confirm="handleDeleteFeed"
     />
     <RenameFeedModal
-      v-if="showRenameModal && activeFeed"
+      v-if="showRenameFeedModal && activeFeed"
       :loading="loadingPatchFeed"
       :error="patchFeedError"
       @close="clearRenameModal"
       @submit="handleRenameFeed"
+    />
+    <AddCollectionModal
+      v-if="showAddCollectionModal"
+      :loading="loadingPostCollection"
+      :error="PostCollectionError"
+      @close="clearAddModal"
+      @submit="handleAddCollection"
     />
   </div>
 </template>

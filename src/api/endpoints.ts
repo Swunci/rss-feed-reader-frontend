@@ -1,6 +1,12 @@
 const BASE_URL = 'http://localhost:8081'
 
 export const endpoints = {
+  collections: {
+    getAll: `${BASE_URL}/collections`,
+    create: `${BASE_URL}/collections`,
+    update: (id: number) => `${BASE_URL}/collections/${id}`,
+    delete: (id: number) => `${BASE_URL}/collections/${id}`,
+  },
   feeds: {
     getAll: `${BASE_URL}/feeds`,
     getUnread: `${BASE_URL}/feeds?filter=unread`,
