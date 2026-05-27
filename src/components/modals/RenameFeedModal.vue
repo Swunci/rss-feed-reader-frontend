@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { feedStore } from '@/stores/feedStore'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 defineProps<{
   error: string | null
@@ -12,7 +12,13 @@ const emit = defineEmits<{
   submit: [name: string]
 }>()
 const { activeFeed } = feedStore()
+
+const inputRef = ref<HTMLInputElement | null>(null)
 const name = ref('')
+
+onMounted(() => {
+  inputRef.value?.focus()
+})
 </script>
 
 <template>
@@ -20,6 +26,7 @@ const name = ref('')
     <div class="modal">
       <h2 class="modal-title">Rename feed</h2>
       <input
+        ref="inputRef"
         v-model="name"
         class="modal-input"
         type="text"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 defineProps<{
   error: string | null
@@ -11,7 +11,13 @@ const emit = defineEmits<{
   submit: [url: string]
 }>()
 
+const inputRef = ref<HTMLInputElement | null>(null)
+
 const url = ref('')
+
+onMounted(() => {
+  inputRef.value?.focus()
+})
 </script>
 
 <template>
@@ -19,6 +25,7 @@ const url = ref('')
     <div class="modal">
       <h2 class="modal-title">Add RSS feed</h2>
       <input
+        ref="inputRef"
         v-model="url"
         class="modal-input"
         type="url"

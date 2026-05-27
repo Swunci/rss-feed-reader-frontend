@@ -96,15 +96,39 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
           <span class="dropdown-item-icon"><FolderPlusIcon /></span>
           New Collection
         </button>
-        <button class="dropdown-item" @click="emit('refresh')">
+        <button
+          class="dropdown-item"
+          @click="
+            () => {
+              emit('refresh')
+              dropdownRef?.close()
+            }
+          "
+        >
           <span class="dropdown-item-icon"><RefreshCwIcon /></span>
           Refresh Feeds
         </button>
-        <button class="dropdown-item" @click="emit('rename')">
+        <button
+          class="dropdown-item"
+          @click="
+            () => {
+              emit('rename')
+              dropdownRef?.close()
+            }
+          "
+        >
           <span class="dropdown-item-icon"><SquarePenIcon /></span>
           Rename Feed
         </button>
-        <button class="dropdown-item danger" @click="emit('delete')">
+        <button
+          class="dropdown-item danger"
+          @click="
+            () => {
+              emit('delete')
+              dropdownRef?.close()
+            }
+          "
+        >
           <span class="dropdown-item-icon">
             <TrashIcon />
           </span>
