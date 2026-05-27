@@ -1,4 +1,4 @@
-export interface Item {
+export type Item = {
   id: number
   feedId: number
   title: string
@@ -9,7 +9,7 @@ export interface Item {
   isFavorite: boolean
 }
 
-export interface ItemAPI {
+export type ItemAPI = {
   id: number
   feed_id: number
   title: string
@@ -20,6 +20,6 @@ export interface ItemAPI {
   is_favorite: boolean
 }
 
-export interface ItemEvent {
+export type ItemEvent = {
   feedId: number
 }

@@ -1,4 +1,4 @@
-import { type FeedFilter, type Feed } from '@/types/feed'
+import { type FeedFilter, type Feed, type FeedAPI } from '@/types/feed'
 import { computed, ref, watch } from 'vue'
 import { useDelete } from '../composables/api/useDelete'
 import { useFetch } from '../composables/api/useFetch'
@@ -6,11 +6,12 @@ import { usePost } from '../composables/api/usePost'
 import { endpoints } from '@/api/endpoints'
 import { useItemSSE } from '../composables/api/useItemSSE'
 import { usePatch } from '@/composables/api/usePatch'
+import { normalizeFeedFields } from '@/utils/normalizer'
 
 const activeFeed = ref<Feed | null>(null)
-const showAddModal = ref(false)
-const showDeleteModal = ref(false)
-const showRenameModal = ref(false)
+const showAddFeedModal = ref(false)
+const showDeleteFeedModal = ref(false)
+const showRenameFeedModal = ref(false)
 const feedFilter = ref<FeedFilter>('all')
 
 const { itemEvent } = useItemSSE()
@@ -20,10 +21,10 @@ const {
   loading: feedsLoading,
   error: feedsError,
   fetchData: fetchFeeds,
-} = useFetch<Feed[]>()
+} = useFetch<FeedAPI[], Feed[]>((data) => data.map(normalizeFeedFields))
 const {
   data: feed,
-  loading: loadingFeed,
+  loading: loadingPostFeed,
   error: postFeedError,
   postData: postFeed,
 } = usePost<Feed>()
@@ -56,7 +57,7 @@ const handleAddFeed = async (feedUrl: string) => {
   const success = await postFeed(endpoints.feeds.create, { url: feedUrl })
   if (success) {
     console.log(`Created feed ${JSON.stringify(feed.value)}`)
-    showAddModal.value = false
+    showAddFeedModal.value = false
     await fetchFilteredFeeds()
   }
 }
@@ -64,7 +65,7 @@ const handleAddFeed = async (feedUrl: string) => {
 const handleDeleteFeed = async () => {
   const success = await deleteFeed(endpoints.feeds.delete(activeFeed.value!.id))
   if (success) {
-    showDeleteModal.value = false
+    showDeleteFeedModal.value = false
     feeds.value = feeds.value?.filter((f) => f.id !== activeFeed.value!.id) ?? []
     activeFeed.value = null
   }
@@ -73,7 +74,7 @@ const handleDeleteFeed = async () => {
 const handleRenameFeed = async (newName: string) => {
   const success = await patchFeed(endpoints.feeds.update(activeFeed.value!.id), { name: newName })
   if (success) {
-    showRenameModal.value = false
+    showRenameFeedModal.value = false
     feeds.value = feeds.value!.map((f) => {
       if (f.id === activeFeed.value?.id) {
         f.name = newName
@@ -118,15 +119,15 @@ init()
 export function feedStore() {
   return {
     activeFeed,
-    showAddModal,
-    showDeleteModal,
-    showRenameModal,
+    showAddFeedModal,
+    showDeleteFeedModal,
+    showRenameFeedModal,
     feedFilter,
     feeds,
     filteredFeeds,
     feedsLoading,
     feedsError,
-    loadingFeed,
+    loadingPostFeed,
     postFeedError,
     loadingDeleteFeed,
     deleteFeedError,
