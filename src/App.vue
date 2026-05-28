@@ -12,6 +12,10 @@ import RenameFeedModal from './components/modals/RenameFeedModal.vue'
 import { useToast } from 'vue-toastification'
 import AddCollectionModal from './components/modals/AddCollectionModal.vue'
 import { collectionStore } from './stores/collectionStore'
+import DeleteCollectionModal from './components/modals/DeleteCollectionModal.vue'
+import type { Feed } from './types/feed'
+import type { Collection } from './types/collection'
+import RenameCollectionModal from './components/modals/RenameCollectionModal.vue'
 
 useItemSSE()
 
@@ -22,8 +26,6 @@ const {
   showAddCollectionModal,
   showDeleteCollectionModal,
   showRenameCollectionModal,
-  collectionsLoading,
-  collectionsError,
   PostCollectionError,
   loadingPostCollection,
   patchCollectionError,
@@ -31,6 +33,8 @@ const {
   deleteCollectionError,
   loadingDeleteCollection,
   handleAddCollection,
+  handleDeleteCollection,
+  handlePatchCollection,
 } = collectionStore()
 
 const {
@@ -89,12 +93,23 @@ const clearRenameModal = () => {
   showRenameCollectionModal.value = false
   patchCollectionError.value = null
 }
+
+const handleFeedSelection = (feed: Feed) => {
+  activeFeed.value = feed
+  activeCollection.value = null
+}
+
+const handleCollectionSelection = (collection: Collection) => {
+  activeCollection.value = collection
+  activeFeed.value = null
+}
 </script>
 
 <template>
   <div class="app-layout">
     <FeedSideTab
-      @select="activeFeed = $event"
+      @selectFeed="handleFeedSelection"
+      @selectCollection="handleCollectionSelection"
       @addFeed="showAddFeedModal = true"
       @addCollection="showAddCollectionModal = true"
       @delete="activeFeed ? (showDeleteFeedModal = true) : toast.error('No feed selected')"
@@ -130,6 +145,7 @@ const clearRenameModal = () => {
     />
     <RenameFeedModal
       v-if="showRenameFeedModal && activeFeed"
+      :feed="activeFeed"
       :loading="loadingPatchFeed"
       :error="patchFeedError"
       @close="clearRenameModal"
@@ -137,10 +153,27 @@ const clearRenameModal = () => {
     />
     <AddCollectionModal
       v-if="showAddCollectionModal"
+      :collection="activeCollection"
       :loading="loadingPostCollection"
       :error="PostCollectionError"
       @close="clearAddModal"
       @submit="handleAddCollection"
+    />
+    <DeleteCollectionModal
+      v-if="showDeleteCollectionModal && activeCollection"
+      :collection="activeCollection"
+      :loading="loadingDeleteCollection"
+      :error="deleteCollectionError"
+      @close="clearDeleteModal"
+      @sumbit="handleDeleteCollection"
+    />
+    <RenameCollectionModal
+      v-if="showRenameCollectionModal && activeCollection"
+      :collection="activeCollection"
+      :loading="loadingPatchCollection"
+      :error="patchCollectionError"
+      @close="clearRenameModal"
+      @submit="handlePatchCollection"
     />
   </div>
 </template>

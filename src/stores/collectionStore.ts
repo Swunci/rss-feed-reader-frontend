@@ -40,9 +40,33 @@ const toggleCollection = (collection_id: number) => {}
 
 const handleAddCollection = async (name: string) => {
   const success = await postCollection(endpoints.collections.create, { name: name })
-  if (!success) {
-    showAddCollectionModal.value = true
+  if (success) {
+    showAddCollectionModal.value = false
     await fetchCollections(endpoints.collections.getAll)
+  }
+}
+
+const handleDeleteCollection = async (collectionId: number) => {
+  const success = await deleteCollection(endpoints.collections.delete(collectionId))
+  if (success) {
+    showDeleteCollectionModal.value = false
+    collections.value = collections.value?.filter((c) => c.id !== collectionId) ?? []
+    activeCollection.value = null
+  }
+}
+
+const handlePatchCollection = async (collectionId: number, newName: string) => {
+  const success = await patchCollection(endpoints.collections.update(collectionId), {
+    name: newName,
+  })
+  if (success) {
+    showRenameCollectionModal.value = false
+    collections.value = collections.value!.map((c) => {
+      if (c.id === collectionId) {
+        c.name = newName
+      }
+      return c
+    })
   }
 }
 
@@ -61,15 +85,17 @@ export function collectionStore() {
     collections,
     collectionsLoading,
     collectionsError,
-    fetchCollections,
     expandedCollections,
-    toggleCollection,
-    handleAddCollection,
     loadingPostCollection,
     PostCollectionError,
     loadingPatchCollection,
     patchCollectionError,
     loadingDeleteCollection,
     deleteCollectionError,
+    fetchCollections,
+    toggleCollection,
+    handleAddCollection,
+    handleDeleteCollection,
+    handlePatchCollection,
   }
 }

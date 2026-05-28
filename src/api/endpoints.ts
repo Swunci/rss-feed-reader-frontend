@@ -18,16 +18,22 @@ export const endpoints = {
     update: (id: number) => `${BASE_URL}/feeds/${id}`,
   },
   items: {
+    getItemEvents: `${BASE_URL}/items/events`,
+    markAllRead: `${BASE_URL}/items/read`,
     getByFeed: (feedId: number, cursor: string) =>
       `${BASE_URL}/feeds/${feedId}/items?cursor=${cursor}`,
-    getItemEvents: `${BASE_URL}/items/events`,
-    getUnreadItems: (feedId: number, cursor: string) =>
+    getUnreadByFeed: (feedId: number, cursor: string) =>
       `${BASE_URL}/feeds/${feedId}/items?read=false&cursor=${cursor}`,
-    getFavoriteItems: (feedId: number, cursor: string) =>
+    getFavoriteByFeed: (feedId: number, cursor: string) =>
       `${BASE_URL}/feeds/${feedId}/items?favorite=true&cursor=${cursor}`,
+    getByCollection: (collectionId: number, cursor: string) =>
+      `${BASE_URL}/collections/${collectionId}/items?cursor=${cursor}`,
+    getUnreadByCollection: (collectionId: number, cursor: string) =>
+      `${BASE_URL}/collections/${collectionId}/items?read=false&cursor=${cursor}`,
+    getFavoriteByCollection: (collectionId: number, cursor: string) =>
+      `${BASE_URL}/collections/${collectionId}/items?favorite=true&cursor=${cursor}`,
     delete: (id: number) => `${BASE_URL}/items/${id}`,
     markRead: (id: number) => `${BASE_URL}/items/${id}/read`,
-    markAllRead: `${BASE_URL}/items/read`,
     favorite: (id: number) => `${BASE_URL}/items/${id}/favorite`,
   },
 }
