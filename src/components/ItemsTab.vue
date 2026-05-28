@@ -11,6 +11,7 @@ import { vInfiniteScroll } from '@vueuse/components'
 import { computed, ref } from 'vue'
 import { refDebounced } from '@vueuse/core'
 import Fuse from 'fuse.js'
+import { collectionStore } from '@/stores/collectionStore'
 
 const emit = defineEmits<{
   select: [item: Item]
@@ -18,10 +19,11 @@ const emit = defineEmits<{
   loadMore: []
 }>()
 const { activeFeed } = feedStore()
+const { activeCollection } = collectionStore()
 const { items, activeItem, itemsLoading, hasMore, loadMore } = itemStore()
 
 const canLoadMore = () => {
-  return hasMore.value && activeFeed.value != null
+  return hasMore.value && (activeFeed.value != null || activeCollection.value != null)
 }
 
 const searchQuery = ref('')

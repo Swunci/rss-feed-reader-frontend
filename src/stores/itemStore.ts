@@ -8,7 +8,10 @@ import { endpoints } from '@/api/endpoints'
 import { useToast } from 'vue-toastification'
 import { feedStore } from './feedStore'
 import { useItemSSE } from '@/composables/api/useItemSSE'
+import { collectionStore } from './collectionStore'
+import type { Collection } from '@/types/collection'
 
+const { activeCollection } = collectionStore()
 const { activeFeed, feedFilter, feeds } = feedStore()
 
 const activeItem = ref<Item | null>(null)
@@ -28,18 +31,36 @@ const { patchData: patchItemAllRead } = usePatch()
 
 const { itemEvent } = useItemSSE()
 
-const getItemsFromAPI = async (activeFeed: Feed | null, feedFilter: string, cursorVal: string) => {
-  if (activeFeed == null) return
-  console.log('filter: %s, activeFeed: %s', feedFilter, JSON.stringify(activeFeed))
-  switch (feedFilter) {
-    case 'unread':
-      await fetchItems(endpoints.items.getUnreadItems(activeFeed.id, cursorVal))
-      break
-    case 'favorite':
-      await fetchItems(endpoints.items.getFavoriteItems(activeFeed.id, cursorVal))
-      break
-    default:
-      await fetchItems(endpoints.items.getByFeed(activeFeed.id, cursorVal))
+const getItemsFromAPI = async (
+  activeFeed: Feed | null,
+  activeCollection: Collection | null,
+  feedFilter: FeedFilter,
+  cursorVal: string,
+) => {
+  if (activeFeed !== null) {
+    console.log('filter: %s, activeFeed: %s', feedFilter, JSON.stringify(activeFeed))
+    switch (feedFilter) {
+      case 'unread':
+        await fetchItems(endpoints.items.getUnreadByFeed(activeFeed.id, cursorVal))
+        break
+      case 'favorite':
+        await fetchItems(endpoints.items.getFavoriteByFeed(activeFeed.id, cursorVal))
+        break
+      default:
+        await fetchItems(endpoints.items.getByFeed(activeFeed.id, cursorVal))
+    }
+  } else if (activeCollection !== null) {
+    console.log('filter: %s, activeCollection: %s', feedFilter, JSON.stringify(activeCollection))
+    switch (feedFilter) {
+      case 'unread':
+        await fetchItems(endpoints.items.getUnreadByCollection(activeCollection.id, cursorVal))
+        break
+      case 'favorite':
+        await fetchItems(endpoints.items.getFavoriteByCollection(activeCollection.id, cursorVal))
+        break
+      default:
+        await fetchItems(endpoints.items.getByCollection(activeCollection.id, cursorVal))
+    }
   }
 }
 
@@ -76,18 +97,21 @@ const updateFeedItemCount = (feeds: Feed[], feed_id: number, value: number) => {
   }
 }
 
-watch([activeFeed, feedFilter], async ([activeFeedValue]) => {
-  items.value = []
-  cursor.value = ''
-  hasMore.value = true
-  activeItem.value = null
-  await getItemsFromAPI(activeFeedValue, feedFilter.value, cursor.value)
-  appendNewItems()
-})
+watch(
+  [activeFeed, activeCollection, feedFilter],
+  async ([activeFeedValue, activeCollectionValue]) => {
+    items.value = []
+    cursor.value = ''
+    hasMore.value = true
+    activeItem.value = null
+    await getItemsFromAPI(activeFeedValue, activeCollectionValue, feedFilter.value, cursor.value)
+    appendNewItems()
+  },
+)
 
 watch(itemEvent, async () => {
   if (itemEvent.value?.feedId === activeFeed.value?.id) {
-    await getItemsFromAPI(activeFeed.value, feedFilter.value, '')
+    await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
     mergeNewItems()
   }
 })
@@ -180,7 +204,7 @@ const handleRefreshItems = async () => {
   cursor.value = ''
   items.value = []
   hasMore.value = true
-  await getItemsFromAPI(activeFeed.value, feedFilter.value, cursor.value)
+  await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, cursor.value)
   appendNewItems()
 }
 
@@ -194,7 +218,7 @@ const loadMore = async () => {
     itemsLoading.value,
   )
   if (activeFeed.value == null || !hasMore.value || itemsLoading.value) return
-  await getItemsFromAPI(activeFeed.value, feedFilter.value, cursor.value)
+  await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, cursor.value)
   appendNewItems()
 }
 

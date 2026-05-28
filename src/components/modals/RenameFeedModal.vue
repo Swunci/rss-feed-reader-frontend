@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { feedStore } from '@/stores/feedStore'
+import type { Feed } from '@/types/feed'
 import { onMounted, ref } from 'vue'
 
 defineProps<{
+  feed: Feed
   error: string | null
   loading: boolean
 }>()
@@ -11,7 +12,6 @@ const emit = defineEmits<{
   close: []
   submit: [name: string]
 }>()
-const { activeFeed } = feedStore()
 
 const inputRef = ref<HTMLInputElement | null>(null)
 const name = ref('')
@@ -30,7 +30,7 @@ onMounted(() => {
         v-model="name"
         class="modal-input"
         type="text"
-        :placeholder="activeFeed?.name"
+        :placeholder="feed.name"
         @keyup.enter="emit('submit', name)"
       />
       <p v-if="error" class="modal-error">Failed to rename</p>

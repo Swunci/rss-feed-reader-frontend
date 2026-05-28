@@ -10,6 +10,8 @@ import {
   BookHeartIcon,
   EllipsisIcon,
   FolderPlusIcon,
+  ChevronsRightIcon,
+  ChevronsDownIcon,
 } from 'lucide-vue-next'
 import ActionsBar from './ActionsBar.vue'
 import type { Feed } from '@/types/feed'
@@ -17,11 +19,14 @@ import { feedStore } from '@/stores/feedStore'
 import DropdownMenu from './DropdownMenu.vue'
 import { ref } from 'vue'
 import { collectionStore } from '@/stores/collectionStore'
+import type { Collection } from '@/types/collection'
 
-const { collections, expandedCollections, toggleCollection } = collectionStore()
+const { collections, activeCollection, expandedCollections, toggleCollection } = collectionStore()
 const { feeds, activeFeed, feedFilter } = feedStore()
+
 const emit = defineEmits<{
-  select: [feed: Feed]
+  selectFeed: [feed: Feed]
+  selectCollection: [collection: Collection]
   unread: []
   favorite: []
   all: []
@@ -137,24 +142,34 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
       </DropdownMenu>
     </ActionsBar>
     <div class="collection-list">
-      <div v-for="collection in collections" :key="collection.id" class="collection-group">
-        <div class="collection-item" @click="toggleCollection(collection.id)">
-          <ChevronRightIcon
-            :size="14"
-            :class="[
-              'collection-chevron',
-              expandedCollections.has(collection.id) ? 'expanded' : '',
-            ]"
-          />
-          <LayersIcon :size="14" class="collection-icon" />
-          <span class="collection-name">{{ collection.name }}</span>
-        </div>
+      <div
+        v-for="collection in collections"
+        :key="collection.id"
+        :class="['collection-item', activeCollection?.id === collection.id ? 'active' : '']"
+        @click="
+          () => {
+            toggleCollection(collection.id)
+            emit('selectCollection', collection)
+          }
+        "
+      >
+        <ChevronsDownIcon
+          v-if="expandedCollections.has(collection.id)"
+          :size="14"
+          :class="['collection-chevron', expandedCollections.has(collection.id) ? 'expanded' : '']"
+        />
+        <ChevronsRightIcon
+          v-else
+          :size="14"
+          :class="['collection-chevron', expandedCollections.has(collection.id) ? 'expanded' : '']"
+        />
+        <span class="collection-name">{{ collection.name }}</span>
         <div v-if="expandedCollections.has(collection.id)" class="collection-feeds">
           <div
             v-for="feed in feeds?.filter((f) => f.collectionId === collection.id)"
             :key="feed.id"
             :class="['feed-item', 'indented', activeFeed?.id === feed.id ? 'active' : '']"
-            @click="emit('select', feed)"
+            @click="emit('selectFeed', feed)"
           >
             <RssIcon :size="14" class="feed-icon" />
             <span class="feed-name">{{ feed.name }}</span>
@@ -162,17 +177,17 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
           </div>
         </div>
       </div>
-    </div>
-    <div class="feed-list">
-      <div
-        v-for="feed in feeds"
-        :key="feed.id"
-        :class="['feed-item', activeFeed?.id === feed.id ? 'active' : '']"
-        @click="emit('select', feed)"
-      >
-        <RssIcon :size="14" class="feed-icon" />
-        <span class="feed-name">{{ feed.name }}</span>
-        <span class="feed-count">{{ feed.count }}</span>
+      <div class="feed-list">
+        <div
+          v-for="feed in feeds"
+          :key="feed.id"
+          :class="['feed-item', activeFeed?.id === feed.id ? 'active' : '']"
+          @click="emit('selectFeed', feed)"
+        >
+          <RssIcon :size="14" class="feed-icon" />
+          <span class="feed-name">{{ feed.name }}</span>
+          <span class="feed-count">{{ feed.count }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -282,6 +297,9 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
 }
 
 .collection-item:hover {
+  background: #f3f4f6;
+}
+.collection-item.active {
   background: #f3f4f6;
 }
 

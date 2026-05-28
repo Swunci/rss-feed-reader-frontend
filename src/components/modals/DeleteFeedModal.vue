@@ -2,7 +2,7 @@
 import type { Feed } from '@/types/feed'
 
 defineProps<{
-  feed: Feed | null
+  feed: Feed
   loading: boolean
   error: string | null
 }>()
@@ -18,7 +18,7 @@ const emit = defineEmits<{
     <div class="modal">
       <h2 class="modal-title">Delete feed</h2>
       <p class="modal-message">
-        Are you sure you want to delete <strong>{{ feed?.name }}</strong
+        Are you sure you want to delete <strong>{{ feed.name }}</strong
         >? This will also remove all its items.
       </p>
       <p v-if="error" class="modal-error">{{ error }}</p>
