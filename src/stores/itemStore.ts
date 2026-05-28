@@ -1,6 +1,6 @@
 import type { Feed, FeedFilter } from '@/types/feed'
 import type { Item, ItemAPI } from '@/types/item'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useFetch } from '../composables/api/useFetch'
 import { normalizeItemFields } from '@/utils/normalizer'
 import { usePatch } from '../composables/api/usePatch'
@@ -97,17 +97,16 @@ const updateFeedItemCount = (feeds: Feed[], feed_id: number, value: number) => {
   }
 }
 
-watch(
-  [activeFeed, activeCollection, feedFilter],
-  async ([activeFeedValue, activeCollectionValue]) => {
-    items.value = []
-    cursor.value = ''
-    hasMore.value = true
-    activeItem.value = null
-    await getItemsFromAPI(activeFeedValue, activeCollectionValue, feedFilter.value, cursor.value)
-    appendNewItems()
-  },
-)
+const activeSelection = computed(() => activeFeed.value ?? activeCollection.value)
+
+watch([activeSelection, feedFilter], async () => {
+  items.value = []
+  cursor.value = ''
+  hasMore.value = true
+  activeItem.value = null
+  await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, cursor.value)
+  appendNewItems()
+})
 
 watch(itemEvent, async () => {
   if (itemEvent.value?.feedId === activeFeed.value?.id) {
@@ -212,12 +211,14 @@ const loadMore = async () => {
   console.log(
     'loadMore called, activeFeed:',
     activeFeed.value,
+    'activeCollection',
+    activeCollection.value,
     'hasMore:',
     hasMore.value,
     'loading:',
     itemsLoading.value,
   )
-  if (activeFeed.value == null || !hasMore.value || itemsLoading.value) return
+  if (itemsLoading.value) return
   await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, cursor.value)
   appendNewItems()
 }
