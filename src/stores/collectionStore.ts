@@ -36,7 +36,13 @@ const {
   deleteData: deleteCollection,
 } = useDelete()
 
-const toggleCollection = (collection_id: number) => {}
+const toggleCollection = (collection_id: number) => {
+  if (expandedCollections.value.has(collection_id)) {
+    expandedCollections.value.delete(collection_id)
+  } else {
+    expandedCollections.value.add(collection_id)
+  }
+}
 
 const handleAddCollection = async (name: string) => {
   const success = await postCollection(endpoints.collections.create, { name: name })

@@ -11,15 +11,15 @@ import {
   EllipsisIcon,
   FolderPlusIcon,
   ChevronsRightIcon,
-  ChevronsDownIcon,
 } from 'lucide-vue-next'
 import ActionsBar from './ActionsBar.vue'
 import type { Feed } from '@/types/feed'
 import { feedStore } from '@/stores/feedStore'
 import DropdownMenu from './DropdownMenu.vue'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { collectionStore } from '@/stores/collectionStore'
 import type { Collection } from '@/types/collection'
+import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus'
 
 const { collections, activeCollection, expandedCollections, toggleCollection } = collectionStore()
 const { feeds, activeFeed, feedFilter } = feedStore()
@@ -36,6 +36,30 @@ const emit = defineEmits<{
   refresh: []
   rename: []
 }>()
+
+const collectionsFeedMap = ref<Record<number, Feed[]>>({})
+const uncollectedFeeds = ref<Feed[]>([])
+
+const handleFeedAdded = (e: DraggableEvent, collectionId: number) => {
+  console.log(e)
+  console.log(`Added to collection: ${collectionId}`)
+}
+
+watch(
+  [feeds, collections],
+  () => {
+    uncollectedFeeds.value = feeds.value?.filter((f) => f.collectionId == null) ?? []
+    collectionsFeedMap.value =
+      collections.value?.reduce(
+        (acc, collection) => {
+          acc[collection.id] = feeds.value?.filter((f) => f.collectionId === collection.id) ?? []
+          return acc
+        },
+        {} as Record<number, Feed[]>,
+      ) ?? {}
+  },
+  { immediate: true },
+)
 
 const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
 </script>
@@ -146,40 +170,49 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
         v-for="collection in collections"
         :key="collection.id"
         :class="['collection-item', activeCollection?.id === collection.id ? 'active' : '']"
-        @click="
-          () => {
-            toggleCollection(collection.id)
-            emit('selectCollection', collection)
-          }
-        "
       >
-        <ChevronsDownIcon
-          v-if="expandedCollections.has(collection.id)"
-          :size="14"
-          :class="['collection-chevron', expandedCollections.has(collection.id) ? 'expanded' : '']"
-        />
-        <ChevronsRightIcon
-          v-else
-          :size="14"
-          :class="['collection-chevron', expandedCollections.has(collection.id) ? 'expanded' : '']"
-        />
-        <span class="collection-name">{{ collection.name }}</span>
-        <div v-if="expandedCollections.has(collection.id)" class="collection-feeds">
-          <div
-            v-for="feed in feeds?.filter((f) => f.collectionId === collection.id)"
-            :key="feed.id"
-            :class="['feed-item', 'indented', activeFeed?.id === feed.id ? 'active' : '']"
-            @click="emit('selectFeed', feed)"
-          >
-            <RssIcon :size="14" class="feed-icon" />
-            <span class="feed-name">{{ feed.name }}</span>
-            <span class="feed-count">{{ feed.count }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="feed-list">
         <div
-          v-for="feed in feeds"
+          class="collection-header"
+          @click="
+            () => {
+              toggleCollection(collection.id)
+              emit('selectCollection', collection)
+            }
+          "
+        >
+          <ChevronsRightIcon
+            :size="14"
+            :class="[
+              'collection-chevron',
+              expandedCollections.has(collection.id) ? 'expanded' : '',
+            ]"
+          />
+          <span class="collection-name">{{ collection.name }}</span>
+        </div>
+        <VueDraggable
+          v-model="collectionsFeedMap[collection.id]!"
+          :sort="false"
+          group="feeds"
+          class="draggable-area"
+          @add="(e) => handleFeedAdded(e, collection.id)"
+        >
+          <template v-if="expandedCollections.has(collection.id)">
+            <div
+              v-for="feed in collectionsFeedMap[collection.id]"
+              :key="feed.id"
+              :class="['feed-item', 'indented', activeFeed?.id === feed.id ? 'active' : '']"
+              @click="emit('selectFeed', feed)"
+            >
+              <RssIcon :size="14" class="feed-icon" />
+              <span class="feed-name">{{ feed.name }}</span>
+              <span class="feed-count">{{ feed.count }}</span>
+            </div>
+          </template>
+        </VueDraggable>
+      </div>
+      <VueDraggable v-model="uncollectedFeeds" :sort="false" group="feeds" class="feed-list">
+        <div
+          v-for="feed in uncollectedFeeds"
           :key="feed.id"
           :class="['feed-item', activeFeed?.id === feed.id ? 'active' : '']"
           @click="emit('selectFeed', feed)"
@@ -188,7 +221,7 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
           <span class="feed-name">{{ feed.name }}</span>
           <span class="feed-count">{{ feed.count }}</span>
         </div>
-      </div>
+      </VueDraggable>
     </div>
   </div>
 </template>
@@ -204,19 +237,18 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
   flex-shrink: 0;
 }
 .feed-list {
-  flex: 1;
   overflow-y: auto;
 }
 .feed-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   cursor: pointer;
-  border-bottom: 1px solid #e5e7eb;
   font-size: 13px;
   color: #111827;
   transition: background 0.15s;
+  width: 100%;
 }
 .feed-item:hover {
   background: #f3f4f6;
@@ -284,22 +316,34 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
   align-items: center;
 }
 
+.collection-list {
+  overflow-y: auto;
+}
+
 .collection-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
   cursor: pointer;
   font-size: 13px;
   color: #111827;
   transition: background 0.15s;
-  border-bottom: 1px solid #e5e7eb;
 }
 
-.collection-item:hover {
+.collection-header {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+}
+
+.collection-header:hover {
   background: #f3f4f6;
 }
-.collection-item.active {
+.collection-header.active {
   background: #f3f4f6;
 }
 
@@ -319,6 +363,11 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
 }
 
 .feed-item.indented {
-  padding-left: 32px;
+  padding-left: 2rem;
+}
+
+.draggable-area {
+  width: 100%;
+  height: 100%;
 }
 </style>
