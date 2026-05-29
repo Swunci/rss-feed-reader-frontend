@@ -7,12 +7,16 @@ import { endpoints } from '@/api/endpoints'
 import { useItemSSE } from '../composables/api/useItemSSE'
 import { usePatch } from '@/composables/api/usePatch'
 import { normalizeFeedFields } from '@/utils/normalizer'
+import type { DraggableEvent } from 'vue-draggable-plus'
 
 const activeFeed = ref<Feed | null>(null)
 const showAddFeedModal = ref(false)
 const showDeleteFeedModal = ref(false)
 const showRenameFeedModal = ref(false)
 const feedFilter = ref<FeedFilter>('all')
+
+const collectionsFeedMap = ref<Record<number, Feed[]>>({})
+const uncollectedFeeds = ref<Feed[]>([])
 
 const { itemEvent } = useItemSSE()
 
@@ -92,6 +96,35 @@ const handleRefreshFeeds = async () => {
   }
 }
 
+const handleFeedIntoCollection = async (e: DraggableEvent, collectionId: number) => {
+  const feedId = uncollectedFeeds.value[e.oldIndex!]!.id
+  console.log(`Add feed (${feedId}) to collection (${collectionId})`)
+  const success = await patchFeed(endpoints.feeds.update(feedId), { collection_id: collectionId })
+  if (success) {
+    console.log(`Feed to collection success`)
+    feeds.value = feeds.value!.map((f) => {
+      if (f.id === feedId) {
+        f.collectionId = collectionId
+      }
+      return f
+    })
+  }
+}
+
+const handleFeedOutOfCollection = async (e: DraggableEvent) => {
+  const feedId = uncollectedFeeds.value[e.newIndex!]!.id
+  const success = await deleteFeed(endpoints.feeds.removeCollection(feedId))
+  if (success) {
+    console.log(`Feed removed from collection`)
+    feeds.value = feeds.value!.map((f) => {
+      if (f.id === feedId) {
+        f.collectionId = null
+      }
+      return f
+    })
+  }
+}
+
 const viewAll = async () => {
   feedFilter.value = 'all'
   await fetchFilteredFeeds()
@@ -133,6 +166,8 @@ export function feedStore() {
     deleteFeedError,
     loadingPatchFeed,
     patchFeedError,
+    collectionsFeedMap,
+    uncollectedFeeds,
     handleAddFeed,
     handleDeleteFeed,
     handleRefreshFeeds,
@@ -140,5 +175,7 @@ export function feedStore() {
     viewAll,
     viewUnread,
     viewFavorites,
+    handleFeedIntoCollection,
+    handleFeedOutOfCollection,
   }
 }

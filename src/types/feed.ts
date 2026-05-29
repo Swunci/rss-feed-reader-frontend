@@ -3,7 +3,7 @@ export type Feed = {
   name: string
   url: string
   count: number
-  collectionId: number
+  collectionId: number | null
 }
 
 export type FeedAPI = {
@@ -11,7 +11,7 @@ export type FeedAPI = {
   name: string
   url: string
   count: number
-  collection_id: number
+  collection_id: number | null
 }
 
 export type FeedFilter = 'all' | 'unread' | 'favorite'

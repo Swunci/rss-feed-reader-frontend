@@ -19,10 +19,18 @@ import DropdownMenu from './DropdownMenu.vue'
 import { ref, watch } from 'vue'
 import { collectionStore } from '@/stores/collectionStore'
 import type { Collection } from '@/types/collection'
-import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus'
+import { VueDraggable } from 'vue-draggable-plus'
 
 const { collections, activeCollection, expandedCollections, toggleCollection } = collectionStore()
-const { feeds, activeFeed, feedFilter } = feedStore()
+const {
+  feeds,
+  activeFeed,
+  feedFilter,
+  collectionsFeedMap,
+  uncollectedFeeds,
+  handleFeedIntoCollection,
+  handleFeedOutOfCollection,
+} = feedStore()
 
 const emit = defineEmits<{
   selectFeed: [feed: Feed]
@@ -36,14 +44,6 @@ const emit = defineEmits<{
   refresh: []
   rename: []
 }>()
-
-const collectionsFeedMap = ref<Record<number, Feed[]>>({})
-const uncollectedFeeds = ref<Feed[]>([])
-
-const handleFeedAdded = (e: DraggableEvent, collectionId: number) => {
-  console.log(e)
-  console.log(`Added to collection: ${collectionId}`)
-}
 
 watch(
   [feeds, collections],
@@ -194,7 +194,8 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
           :sort="false"
           group="feeds"
           class="draggable-area"
-          @add="(e) => handleFeedAdded(e, collection.id)"
+          @add="(e) => handleFeedIntoCollection(e, collection.id)"
+          @remove="(e) => handleFeedOutOfCollection(e)"
         >
           <template v-if="expandedCollections.has(collection.id)">
             <div
