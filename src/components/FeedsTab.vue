@@ -166,13 +166,9 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
       </DropdownMenu>
     </ActionsBar>
     <div class="collection-list">
-      <div
-        v-for="collection in collections"
-        :key="collection.id"
-        :class="['collection-item', activeCollection?.id === collection.id ? 'active' : '']"
-      >
+      <div v-for="collection in collections" :key="collection.id" class="collection-item">
         <div
-          class="collection-header"
+          :class="['collection-header', activeCollection?.id === collection.id ? 'active' : '']"
           @click="
             () => {
               toggleCollection(collection.id)

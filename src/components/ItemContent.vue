@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { Item } from '@/types/item'
 import {
   CircleCheckIcon,
   CircleMinusIcon,
@@ -11,13 +10,21 @@ import ActionsBar from './ActionsBar.vue'
 import { formatDate } from '@/utils/date'
 import { computed } from 'vue'
 import { fixLinks } from '@/utils/html'
+import { itemStore } from '@/stores/itemStore'
+import { feedStore } from '@/stores/feedStore'
 
-const props = defineProps<{
-  item: Item
-  feedName: string
-}>()
+const { activeItem } = itemStore()
+const { feeds } = feedStore()
+const safeHtml = computed(() => {
+  if (activeItem.value) {
+    return fixLinks(activeItem.value.description)
+  }
+  return ''
+})
 
-const safeHtml = computed(() => fixLinks(props.item.description))
+const feedName = computed(() => {
+  return feeds.value?.find((f) => f.id == activeItem.value?.feedId)?.name
+})
 
 const emit = defineEmits<{
   favorite: [id: number]
@@ -30,16 +37,16 @@ const emit = defineEmits<{
   <div class="item-content-tab">
     <ActionsBar>
       <div class="actions-group">
-        <button class="icon-btn" @click="emit('favorite', item.id)" title="Favorite">
-          <HeartPlusIcon v-if="!item.isFavorite" />
+        <button class="icon-btn" @click="emit('favorite', activeItem!.id)" title="Favorite">
+          <HeartPlusIcon v-if="!activeItem!.isFavorite" />
           <HeartMinusIcon v-else />
         </button>
         <button
           class="icon-btn"
           @click="emit('markRead')"
-          :title="item.isRead ? 'Mark as unread' : 'Mark as read'"
+          :title="activeItem!.isRead ? 'Mark as unread' : 'Mark as read'"
         >
-          <CircleCheckIcon v-if="!item.isRead" />
+          <CircleCheckIcon v-if="!activeItem!.isRead" />
           <CircleMinusIcon v-else />
         </button>
         <button class="icon-btn" @click="emit('openLink')" title="Open link">
@@ -50,10 +57,10 @@ const emit = defineEmits<{
     <div class="scroll-container">
       <div class="content-wrapper">
         <h1>
-          <b>{{ item.title }}</b>
+          <b>{{ activeItem!.title }}</b>
         </h1>
         <div>{{ feedName }}</div>
-        <div>{{ formatDate(item.publishedAt) }}</div>
+        <div>{{ formatDate(activeItem!.publishedAt) }}</div>
         <div v-html="safeHtml"></div>
       </div>
     </div>

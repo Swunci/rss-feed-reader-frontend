@@ -122,8 +122,6 @@ const handleCollectionSelection = (collection: Collection) => {
     <ItemsTab @select="handleSelectItem" @markAllRead="handleMarkAllRead" @loadMore="loadMore" />
     <ItemContent
       v-if="activeItem"
-      :item="activeItem"
-      :feedName="activeFeed!.name"
       @markRead="handleMarkReadItem"
       @favorite="handleFavoriteItem"
       @openLink="handleOpenLink"
