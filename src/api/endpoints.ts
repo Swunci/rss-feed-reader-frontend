@@ -21,6 +21,9 @@ export const endpoints = {
   items: {
     getItemEvents: `${BASE_URL}/items/events`,
     markAllRead: `${BASE_URL}/items/read`,
+    getAllItems: (cursor: string) => `${BASE_URL}/items?cursor=${cursor}`,
+    getAllUnreadItems: (cursor: string) => `${BASE_URL}/items?read=false&cursor=${cursor}`,
+    getAllFavoriteItems: (cursor: string) => `${BASE_URL}/items?favorite=true&cursor=${cursor}`,
     getByFeed: (feedId: number, cursor: string) =>
       `${BASE_URL}/feeds/${feedId}/items?cursor=${cursor}`,
     getUnreadByFeed: (feedId: number, cursor: string) =>

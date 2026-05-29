@@ -8,29 +8,38 @@ import { LoaderCircleIcon } from 'lucide-vue-next'
 import { itemStore } from '@/stores/itemStore'
 import { feedStore } from '@/stores/feedStore'
 import { vInfiniteScroll } from '@vueuse/components'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { refDebounced } from '@vueuse/core'
 import Fuse from 'fuse.js'
 import { collectionStore } from '@/stores/collectionStore'
+import { useItemSSE } from '@/composables/api/useItemSSE.ts'
 
 const emit = defineEmits<{
   select: [item: Item]
   markAllRead: []
   loadMore: []
 }>()
-const { activeFeed } = feedStore()
+const { activeFeed, feedFilter, collectionsFeedMap } = feedStore()
 const { activeCollection } = collectionStore()
-const { items, activeItem, itemsLoading, hasMore, loadMore } = itemStore()
+const {
+  items,
+  activeItem,
+  itemsLoading,
+  hasMore,
+  loadMore,
+  getItemsFromAPI,
+  mergeNewItems,
+  appendNewItems,
+} = itemStore()
 
-const canLoadMore = () => {
-  return hasMore.value && (activeFeed.value != null || activeCollection.value != null)
-}
+const { itemEvent } = useItemSSE()
 
 const searchQuery = ref('')
 
 const debouncedQuery = refDebounced(searchQuery, 500)
 
 const filteredItems = computed(() => {
+  console.log('???')
   if (debouncedQuery.value.trim().length === 0) return items.value
   const fuse = new Fuse(items.value, {
     keys: ['title', 'description'],
@@ -39,6 +48,29 @@ const filteredItems = computed(() => {
   })
   return fuse.search(debouncedQuery.value).map((result) => result.item)
 })
+
+watch(itemEvent, async () => {
+  const newEventFeedId = itemEvent.value?.feedId
+
+  if (
+    newEventFeedId === activeFeed.value?.id ||
+    (!activeCollection && !activeFeed) ||
+    isInActiveCollection(newEventFeedId)
+  ) {
+    await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
+    mergeNewItems()
+  }
+})
+
+onMounted(async () => {
+  await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
+  appendNewItems()
+})
+
+function isInActiveCollection(feedId: number | undefined): boolean {
+  if (!activeCollection.value || !feedId) return false
+  return collectionsFeedMap.value[activeCollection.value.id]?.some((f) => f.id === feedId) ?? false
+}
 </script>
 
 <template>
@@ -52,7 +84,10 @@ const filteredItems = computed(() => {
         <CheckCheckIcon :size="25" />
       </button>
     </ActionsBar>
-    <div class="items-list" v-infinite-scroll="[loadMore, { distance: 200, canLoadMore }]">
+    <div
+      class="items-list"
+      v-infinite-scroll="[loadMore, { distance: 200, canLoadMore: () => hasMore }]"
+    >
       <div
         v-for="item in filteredItems"
         :key="item.id"

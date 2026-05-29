@@ -29,8 +29,6 @@ const {
 const { patchData: patchItem } = usePatch()
 const { patchData: patchItemAllRead } = usePatch()
 
-const { itemEvent } = useItemSSE()
-
 const getItemsFromAPI = async (
   activeFeed: Feed | null,
   activeCollection: Collection | null,
@@ -60,6 +58,18 @@ const getItemsFromAPI = async (
         break
       default:
         await fetchItems(endpoints.items.getByCollection(activeCollection.id, cursorVal))
+    }
+  } else {
+    console.log('filter: %s', feedFilter)
+    switch (feedFilter) {
+      case 'unread':
+        await fetchItems(endpoints.items.getAllUnreadItems(cursorVal))
+        break
+      case 'favorite':
+        await fetchItems(endpoints.items.getAllFavoriteItems(cursorVal))
+        break
+      default:
+        await fetchItems(endpoints.items.getAllItems(cursorVal))
     }
   }
 }
@@ -106,13 +116,6 @@ watch([activeSelection, feedFilter], async () => {
   activeItem.value = null
   await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, cursor.value)
   appendNewItems()
-})
-
-watch(itemEvent, async () => {
-  if (itemEvent.value?.feedId === activeFeed.value?.id) {
-    await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
-    mergeNewItems()
-  }
 })
 
 const handleSelectItem = async (item: Item) => {
@@ -237,5 +240,8 @@ export function itemStore() {
     handleOpenLink,
     handleRefreshItems,
     loadMore,
+    getItemsFromAPI,
+    mergeNewItems,
+    appendNewItems,
   }
 }

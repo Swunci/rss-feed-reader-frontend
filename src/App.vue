@@ -94,6 +94,11 @@ const clearRenameModal = () => {
   patchCollectionError.value = null
 }
 
+const handleSelectAll = () => {
+  activeFeed.value = null
+  activeCollection.value = null
+}
+
 const handleFeedSelection = (feed: Feed) => {
   activeFeed.value = feed
   activeCollection.value = null
@@ -108,6 +113,7 @@ const handleCollectionSelection = (collection: Collection) => {
 <template>
   <div class="app-layout">
     <FeedSideTab
+      @selectAll="handleSelectAll"
       @selectFeed="handleFeedSelection"
       @selectCollection="handleCollectionSelection"
       @addFeed="showAddFeedModal = true"

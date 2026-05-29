@@ -16,7 +16,7 @@ import ActionsBar from './ActionsBar.vue'
 import type { Feed } from '@/types/feed'
 import { feedStore } from '@/stores/feedStore'
 import DropdownMenu from './DropdownMenu.vue'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { collectionStore } from '@/stores/collectionStore'
 import type { Collection } from '@/types/collection'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -33,6 +33,7 @@ const {
 } = feedStore()
 
 const emit = defineEmits<{
+  selectAll: []
   selectFeed: [feed: Feed]
   selectCollection: [collection: Collection]
   unread: []
@@ -44,6 +45,12 @@ const emit = defineEmits<{
   refresh: []
   rename: []
 }>()
+
+const filterConfig = {
+  all: { label: 'All Feeds', icon: LayersIcon },
+  unread: { label: 'All Unread', icon: EyeOffIcon },
+  favorite: { label: 'All Favorites', icon: BookHeartIcon },
+} as const
 
 watch(
   [feeds, collections],
@@ -62,6 +69,14 @@ watch(
 )
 
 const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
+
+const collectionCounts = computed(() => {
+  const counts: Record<number, number> = {}
+  for (const [collectionId, feeds] of Object.entries(collectionsFeedMap.value)) {
+    counts[Number(collectionId)] = feeds.reduce((sum, f) => sum + (f.count ?? 0), 0)
+  }
+  return counts
+})
 </script>
 
 <template>
@@ -165,6 +180,13 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
         </button>
       </DropdownMenu>
     </ActionsBar>
+    <div
+      :class="['feed-item', !activeCollection && !activeFeed ? 'active' : '']"
+      @click="emit('selectAll')"
+    >
+      <component :is="filterConfig[feedFilter].icon" :size="14" />
+      <span class="feed-name">{{ filterConfig[feedFilter].label }}</span>
+    </div>
     <div class="collection-list">
       <div v-for="collection in collections" :key="collection.id" class="collection-item">
         <div
@@ -184,6 +206,7 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
             ]"
           />
           <span class="collection-name">{{ collection.name }}</span>
+          <span class="feed-count">{{ collectionCounts[collection.id] }}</span>
         </div>
         <VueDraggable
           v-model="collectionsFeedMap[collection.id]!"
@@ -330,11 +353,19 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
 .collection-header {
   display: flex;
   align-items: center;
+  flex-direction: row;
   cursor: pointer;
   font-size: 13px;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   width: 100%;
+}
+
+.collection-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .collection-header:hover {

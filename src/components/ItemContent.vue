@@ -15,6 +15,7 @@ import { feedStore } from '@/stores/feedStore'
 
 const { activeItem } = itemStore()
 const { feeds } = feedStore()
+
 const safeHtml = computed(() => {
   if (activeItem.value) {
     return fixLinks(activeItem.value.description)
@@ -61,6 +62,7 @@ const emit = defineEmits<{
         </h1>
         <div>{{ feedName }}</div>
         <div>{{ formatDate(activeItem!.publishedAt) }}</div>
+        <hr />
         <div v-html="safeHtml"></div>
       </div>
     </div>
