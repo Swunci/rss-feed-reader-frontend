@@ -5,8 +5,8 @@ import ItemContent from './components/ItemContent.vue'
 import './styles/shared.css'
 import AddFeedModal from './components/modals/AddFeedModal.vue'
 import DeleteFeedModal from './components/modals/DeleteFeedModal.vue'
-import { itemStore } from './stores/itemStore'
-import { feedStore } from './stores/feedStore'
+import { useItemStore } from './stores/itemStore'
+import { useFeedStore } from './stores/feedStore'
 import { useItemSSE } from './composables/api/useItemSSE'
 import RenameFeedModal from './components/modals/RenameFeedModal.vue'
 import { useToast } from 'vue-toastification'
@@ -37,6 +37,7 @@ const {
   handlePatchCollection,
 } = collectionStore()
 
+const feedStore = useFeedStore()
 const {
   activeFeed,
   showAddFeedModal,
@@ -48,6 +49,7 @@ const {
   deleteFeedError,
   loadingPatchFeed,
   patchFeedError,
+  feedFilter,
   handleAddFeed,
   handleDeleteFeed,
   handleRefreshFeeds,
@@ -55,22 +57,27 @@ const {
   viewAll,
   viewUnread,
   viewFavorites,
-} = feedStore()
+} = feedStore
 
-const {
-  activeItem,
-  handleMarkReadItem,
-  handleFavoriteItem,
-  handleSelectItem,
-  handleMarkAllRead,
-  handleRefreshItems,
-  handleOpenLink,
-  loadMore,
-} = itemStore()
+const itemStore = useItemStore()
+const { activeItem, hasMore, items, cursor } = itemStore
 
 const handleRefresh = () => {
   handleRefreshFeeds()
   handleRefreshItems()
+}
+
+const handleRefreshItems = async () => {
+  cursor.value = ''
+  items.value = []
+  hasMore.value = true
+  await itemStore.getItemsFromAPI(
+    activeFeed.value,
+    activeCollection.value,
+    feedFilter.value,
+    cursor.value,
+  )
+  itemStore.appendNewItems()
 }
 
 const clearAddModal = () => {
@@ -125,13 +132,8 @@ const handleCollectionSelection = (collection: Collection) => {
       @unread="viewUnread"
       @favorite="viewFavorites"
     />
-    <ItemsTab @select="handleSelectItem" @markAllRead="handleMarkAllRead" @loadMore="loadMore" />
-    <ItemContent
-      v-if="activeItem"
-      @markRead="handleMarkReadItem"
-      @favorite="handleFavoriteItem"
-      @openLink="handleOpenLink"
-    />
+    <ItemsTab />
+    <ItemContent v-if="activeItem" />
     <AddFeedModal
       v-if="showAddFeedModal"
       :loading="loadingPostFeed"

@@ -57,6 +57,15 @@ const fetchFilteredFeeds = async () => {
   }
 }
 
+const updateFeedItemCount = (feed_id: number, value: number) => {
+  if (feeds.value != null) {
+    const feed = feeds.value.find((f) => f.id === feed_id)
+    if (feed) {
+      feed.count += value
+    }
+  }
+}
+
 const handleAddFeed = async (feedUrl: string) => {
   const success = await postFeed(endpoints.feeds.create, { url: feedUrl })
   if (success) {
@@ -149,7 +158,7 @@ function init() {
 
 init()
 
-export function feedStore() {
+export function useFeedStore() {
   return {
     activeFeed,
     showAddFeedModal,
@@ -177,5 +186,6 @@ export function feedStore() {
     viewFavorites,
     handleFeedIntoCollection,
     handleFeedOutOfCollection,
+    updateFeedItemCount,
   }
 }

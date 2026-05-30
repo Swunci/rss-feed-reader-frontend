@@ -1,21 +1,14 @@
 import type { Feed, FeedFilter } from '@/types/feed'
 import type { Item, ItemAPI } from '@/types/item'
-import { computed, ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useFetch } from '../composables/api/useFetch'
 import { normalizeItemFields } from '@/utils/normalizer'
 import { usePatch } from '../composables/api/usePatch'
 import { endpoints } from '@/api/endpoints'
-import { useToast } from 'vue-toastification'
-import { feedStore } from './feedStore'
-import { useItemSSE } from '@/composables/api/useItemSSE'
-import { collectionStore } from './collectionStore'
+
 import type { Collection } from '@/types/collection'
 
-const { activeCollection } = collectionStore()
-const { activeFeed, feedFilter, feeds } = feedStore()
-
 const activeItem = ref<Item | null>(null)
-const toast = useToast()
 const items = ref<Item[]>([])
 const cursor = ref<string>('')
 const hasMore = ref<boolean>(true)
@@ -100,145 +93,77 @@ const mergeNewItems = () => {
   }
 }
 
-const updateFeedItemCount = (feeds: Feed[], feed_id: number, value: number) => {
-  const feed = feeds.find((f) => f.id === feed_id)
-  if (feed) {
-    feed.count += value
-  }
-}
-
-const activeSelection = computed(() => activeFeed.value ?? activeCollection.value)
-
-watch([activeSelection, feedFilter], async () => {
-  items.value = []
-  cursor.value = ''
-  hasMore.value = true
-  activeItem.value = null
-  await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, cursor.value)
-  appendNewItems()
-})
-
-const handleSelectItem = async (item: Item) => {
+const selectItem = async (item: Item) => {
   activeItem.value = item
   if (!item.isRead) {
-    if (feedFilter.value === 'unread') updateFeedItemCount(feeds.value ?? [], item.feedId, -1)
     item.isRead = true
     const success = await patchItem(endpoints.items.markRead(item.id), { is_read: true })
     if (!success) {
-      if (feedFilter.value === 'unread') updateFeedItemCount(feeds.value ?? [], item.feedId, 1)
       item.isRead = false
     }
   }
 }
 
-const handleMarkReadItem = async () => {
+const markItemRead = async () => {
   if (activeItem.value == null) return
   activeItem.value.isRead = !activeItem.value.isRead
-  if (feedFilter.value === 'unread')
-    updateFeedItemCount(
-      feeds.value ?? [],
-      activeItem.value.feedId,
-      activeItem.value.isRead ? -1 : 1,
-    )
   const success = await patchItem(endpoints.items.markRead(activeItem.value.id), {
     is_read: activeItem.value.isRead,
   })
   if (!success) {
     activeItem.value.isRead = !activeItem.value.isRead
-    if (feedFilter.value === 'unread')
-      updateFeedItemCount(
-        feeds.value ?? [],
-        activeItem.value.feedId,
-        activeItem.value.isRead ? -1 : 1,
-      )
   }
+  return success
 }
 
-const handleFavoriteItem = async () => {
-  if (activeItem.value == null) return
+const toggleFavorite = async () => {
+  if (activeItem.value == null) return false
   activeItem.value.isFavorite = !activeItem.value.isFavorite
-  if (feedFilter.value === 'favorite')
-    updateFeedItemCount(
-      feeds.value ?? [],
-      activeItem.value.feedId,
-      activeItem.value.isFavorite ? 1 : -1,
-    )
   const success = await patchItem(endpoints.items.favorite(activeItem.value.id), {
-    is_favorite: !activeItem.value.isFavorite,
+    is_favorite: activeItem.value.isFavorite,
   })
-  if (!success) {
-    activeItem.value.isFavorite = !activeItem.value.isFavorite
-    if (feedFilter.value === 'favorite')
-      updateFeedItemCount(
-        feeds.value ?? [],
-        activeItem.value.feedId,
-        activeItem.value.isFavorite ? 1 : -1,
-      )
-  }
+  if (!success) activeItem.value.isFavorite = !activeItem.value.isFavorite
+  return success
 }
 
-const handleMarkAllRead = async () => {
-  if (activeFeed.value == null) return
+const markAllRead = async () => {
   const unreadItemIDs = new Set(items.value?.filter((i) => !i.isRead).map((i) => i.id))
-  const count = activeFeed.value.count
-  if (feedFilter.value === 'unread')
-    updateFeedItemCount(feeds.value ?? [], activeFeed.value.id, -count)
+  items.value?.forEach((i) => (i.isRead = true))
   const success = await patchItemAllRead(endpoints.items.markAllRead, {
     item_ids: [...unreadItemIDs],
     is_read: true,
   })
-  items.value?.forEach((i) => (i.isRead = true))
   if (!success) {
-    toast.error('Failed to mark all as read')
-    if (feedFilter.value === 'unread')
-      updateFeedItemCount(feeds.value ?? [], activeFeed.value.id, count)
     items.value?.forEach((i) => {
       if (unreadItemIDs.has(i.id)) i.isRead = false
     })
   }
+  return { success, unreadCount: unreadItemIDs.size }
 }
 
-const handleOpenLink = () => {
-  if (activeItem.value != null) window.open(activeItem.value.link, '_blank', 'noopener,noreferrer')
-}
-
-const handleRefreshItems = async () => {
-  cursor.value = ''
-  items.value = []
-  hasMore.value = true
-  await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, cursor.value)
-  appendNewItems()
-}
-
-const loadMore = async () => {
-  console.log(
-    'loadMore called, activeFeed:',
-    activeFeed.value,
-    'activeCollection',
-    activeCollection.value,
-    'hasMore:',
-    hasMore.value,
-    'loading:',
-    itemsLoading.value,
-  )
+const loadMore = async (
+  activeFeed: Feed | null,
+  activeCollection: Collection | null,
+  feedFilter: FeedFilter,
+  cursor: string,
+) => {
   if (itemsLoading.value) return
-  await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, cursor.value)
+  await getItemsFromAPI(activeFeed, activeCollection, feedFilter, cursor)
   appendNewItems()
 }
 
-export function itemStore() {
+export function useItemStore() {
   return {
     items,
     itemsLoading,
     itemsError,
     activeItem,
     hasMore,
-    handleMarkReadItem,
-    handleFavoriteItem,
-    handleSelectItem,
-    handleMarkAllRead,
-    handleOpenLink,
-    handleRefreshItems,
+    cursor,
+    selectItem,
+    markItemRead,
+    toggleFavorite,
+    markAllRead,
     loadMore,
     getItemsFromAPI,
     mergeNewItems,

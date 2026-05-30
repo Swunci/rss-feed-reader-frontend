@@ -5,32 +5,25 @@ import type { Item } from '@/types/item'
 import { formatRelativeTime } from '@/utils/date'
 import { LoaderCircleIcon } from 'lucide-vue-next'
 
-import { itemStore } from '@/stores/itemStore'
-import { feedStore } from '@/stores/feedStore'
+import { useItemStore } from '@/stores/itemStore'
+import { useFeedStore } from '@/stores/feedStore'
 import { vInfiniteScroll } from '@vueuse/components'
 import { computed, onMounted, ref, watch } from 'vue'
 import { refDebounced } from '@vueuse/core'
 import Fuse from 'fuse.js'
 import { collectionStore } from '@/stores/collectionStore'
 import { useItemSSE } from '@/composables/api/useItemSSE.ts'
+import { useToast } from 'vue-toastification'
 
-const emit = defineEmits<{
-  select: [item: Item]
-  markAllRead: []
-  loadMore: []
-}>()
-const { activeFeed, feedFilter, collectionsFeedMap } = feedStore()
+const toast = useToast()
+
+const feedStore = useFeedStore()
+const { activeFeed, feedFilter, collectionsFeedMap } = feedStore
+
 const { activeCollection } = collectionStore()
-const {
-  items,
-  activeItem,
-  itemsLoading,
-  hasMore,
-  loadMore,
-  getItemsFromAPI,
-  mergeNewItems,
-  appendNewItems,
-} = itemStore()
+
+const itemStore = useItemStore()
+const { items, activeItem, hasMore, itemsLoading, cursor } = itemStore
 
 const { itemEvent } = useItemSSE()
 
@@ -39,7 +32,6 @@ const searchQuery = ref('')
 const debouncedQuery = refDebounced(searchQuery, 500)
 
 const filteredItems = computed(() => {
-  console.log('???')
   if (debouncedQuery.value.trim().length === 0) return items.value
   const fuse = new Fuse(items.value, {
     keys: ['title', 'description'],
@@ -47,6 +39,22 @@ const filteredItems = computed(() => {
     ignoreLocation: true,
   })
   return fuse.search(debouncedQuery.value).map((result) => result.item)
+})
+
+const activeSelection = computed(() => activeFeed.value ?? activeCollection.value)
+
+watch([activeSelection, feedFilter], async () => {
+  items.value = []
+  cursor.value = ''
+  hasMore.value = true
+  activeItem.value = null
+  await itemStore.getItemsFromAPI(
+    activeFeed.value,
+    activeCollection.value,
+    feedFilter.value,
+    cursor.value,
+  )
+  itemStore.appendNewItems()
 })
 
 watch(itemEvent, async () => {
@@ -57,19 +65,53 @@ watch(itemEvent, async () => {
     (!activeCollection && !activeFeed) ||
     isInActiveCollection(newEventFeedId)
   ) {
-    await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
-    mergeNewItems()
+    await itemStore.getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
+    itemStore.mergeNewItems()
   }
 })
 
 onMounted(async () => {
-  await getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
-  appendNewItems()
+  await itemStore.getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
+  itemStore.appendNewItems()
 })
 
 function isInActiveCollection(feedId: number | undefined): boolean {
   if (!activeCollection.value || !feedId) return false
   return collectionsFeedMap.value[activeCollection.value.id]?.some((f) => f.id === feedId) ?? false
+}
+
+const loadMore = async () => {
+  if (itemsLoading.value) return
+  await itemStore.getItemsFromAPI(
+    activeFeed.value,
+    activeCollection.value,
+    feedFilter.value,
+    cursor.value,
+  )
+  itemStore.appendNewItems()
+}
+
+const handleSelectItem = async (item: Item) => {
+  const wasRead = item.isRead
+  if (!wasRead && feedFilter.value === 'unread') {
+    feedStore.updateFeedItemCount(item.feedId, -1)
+  }
+  await itemStore.selectItem(item)
+  if (!item.isRead && !wasRead && feedFilter.value === 'unread') {
+    feedStore.updateFeedItemCount(item.feedId, 1)
+  }
+}
+
+const handleMarkAllRead = async () => {
+  if (activeFeed.value == null) return
+  const count = activeFeed.value.count
+  if (feedFilter.value === 'unread') feedStore.updateFeedItemCount(activeFeed.value.id, -count)
+
+  const { success } = await itemStore.markAllRead()
+  if (!success) {
+    toast.error('Failed to mark all as read')
+    if (feedFilter.value === 'unread') feedStore.updateFeedItemCount(activeFeed.value.id, count)
+  }
 }
 </script>
 
@@ -80,7 +122,7 @@ function isInActiveCollection(feedId: number | undefined): boolean {
         <SearchIcon :size="14" class="search-icon" />
         <input class="search-input" type="text" placeholder="Search…" v-model="searchQuery" />
       </label>
-      <button class="icon-btn" @click="emit('markAllRead')" title="Mark all read">
+      <button class="icon-btn" @click="handleMarkAllRead" title="Mark all read">
         <CheckCheckIcon :size="25" />
       </button>
     </ActionsBar>
@@ -92,7 +134,7 @@ function isInActiveCollection(feedId: number | undefined): boolean {
         v-for="item in filteredItems"
         :key="item.id"
         :class="['news-item', activeItem?.id === item.id ? 'active' : '']"
-        @click="emit('select', item)"
+        @click="handleSelectItem(item)"
       >
         <div class="news-item-inner">
           <span v-if="item.isFavorite" class="favorite-star" />

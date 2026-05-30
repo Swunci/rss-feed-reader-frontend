@@ -10,11 +10,14 @@ import ActionsBar from './ActionsBar.vue'
 import { formatDate } from '@/utils/date'
 import { computed } from 'vue'
 import { fixLinks } from '@/utils/html'
-import { itemStore } from '@/stores/itemStore'
-import { feedStore } from '@/stores/feedStore'
+import { useItemStore } from '@/stores/itemStore'
+import { useFeedStore } from '@/stores/feedStore'
 
-const { activeItem } = itemStore()
-const { feeds } = feedStore()
+const itemStore = useItemStore()
+const { activeItem } = useItemStore()
+
+const feedStore = useFeedStore()
+const { feeds, feedFilter } = useFeedStore()
 
 const safeHtml = computed(() => {
   if (activeItem.value) {
@@ -27,30 +30,51 @@ const feedName = computed(() => {
   return feeds.value?.find((f) => f.id == activeItem.value?.feedId)?.name
 })
 
-const emit = defineEmits<{
-  favorite: [id: number]
-  markRead: []
-  openLink: []
-}>()
+const handleOpenLink = () => {
+  if (activeItem.value != null) window.open(activeItem.value.link, '_blank', 'noopener,noreferrer')
+}
+
+async function handleMarkReadItem() {
+  if (activeItem.value == null) return
+  const wasRead = activeItem.value.isRead
+  if (feedFilter.value === 'unread') {
+    feedStore.updateFeedItemCount(activeItem.value.feedId, wasRead ? 1 : -1)
+  }
+  const success = await itemStore.markItemRead()
+  if (!success && feedFilter.value === 'unread') {
+    feedStore.updateFeedItemCount(activeItem.value.feedId, wasRead ? -1 : 1)
+  }
+}
+
+const handleFavoriteItem = async () => {
+  if (activeItem.value == null) return
+  const wasFavorite = activeItem.value.isFavorite
+  if (feedFilter.value === 'favorite')
+    feedStore.updateFeedItemCount(activeItem.value.feedId, wasFavorite ? -1 : 1)
+
+  const success = await itemStore.toggleFavorite()
+  if (!success && feedFilter.value === 'favorite')
+    feedStore.updateFeedItemCount(activeItem.value.feedId, wasFavorite ? 1 : -1)
+}
 </script>
 
 <template>
   <div class="item-content-tab">
     <ActionsBar>
       <div class="actions-group">
-        <button class="icon-btn" @click="emit('favorite', activeItem!.id)" title="Favorite">
+        <button class="icon-btn" @click="handleFavoriteItem" title="Favorite">
           <HeartPlusIcon v-if="!activeItem!.isFavorite" />
           <HeartMinusIcon v-else />
         </button>
         <button
           class="icon-btn"
-          @click="emit('markRead')"
+          @click="handleMarkReadItem"
           :title="activeItem!.isRead ? 'Mark as unread' : 'Mark as read'"
         >
           <CircleCheckIcon v-if="!activeItem!.isRead" />
           <CircleMinusIcon v-else />
         </button>
-        <button class="icon-btn" @click="emit('openLink')" title="Open link">
+        <button class="icon-btn" @click="handleOpenLink" title="Open link">
           <ExternalLinkIcon />
         </button>
       </div>

@@ -14,7 +14,7 @@ import {
 } from 'lucide-vue-next'
 import ActionsBar from './ActionsBar.vue'
 import type { Feed } from '@/types/feed'
-import { feedStore } from '@/stores/feedStore'
+import { useFeedStore } from '@/stores/feedStore'
 import DropdownMenu from './DropdownMenu.vue'
 import { computed, ref, watch } from 'vue'
 import { collectionStore } from '@/stores/collectionStore'
@@ -22,6 +22,7 @@ import type { Collection } from '@/types/collection'
 import { VueDraggable } from 'vue-draggable-plus'
 
 const { collections, activeCollection, expandedCollections, toggleCollection } = collectionStore()
+
 const {
   feeds,
   activeFeed,
@@ -30,7 +31,7 @@ const {
   uncollectedFeeds,
   handleFeedIntoCollection,
   handleFeedOutOfCollection,
-} = feedStore()
+} = useFeedStore()
 
 const emit = defineEmits<{
   selectAll: []
