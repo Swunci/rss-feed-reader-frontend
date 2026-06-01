@@ -10,9 +10,10 @@ import {
   EllipsisIcon,
   FolderPlusIcon,
 } from 'lucide-vue-next'
-import ActionsBar from '../ActionsBar.vue'
+import ActionsBar from '@/components/ActionsBar.vue'
+import FeedsList from './FeedsList.vue'
 import { useFeedStore } from '@/stores/feedStore'
-import DropdownMenu from '../DropdownMenu.vue'
+import DropdownMenu from '@/components/DropdownMenu.vue'
 import { ref } from 'vue'
 
 const feedStore = useFeedStore()

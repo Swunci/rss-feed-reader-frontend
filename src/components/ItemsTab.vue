@@ -11,7 +11,7 @@ import { vInfiniteScroll } from '@vueuse/components'
 import { computed, onMounted, ref, watch } from 'vue'
 import { refDebounced } from '@vueuse/core'
 import Fuse from 'fuse.js'
-import { collectionStore } from '@/stores/collectionStore'
+import { useCollectionStore } from '@/stores/collectionStore'
 import { useItemSSE } from '@/composables/api/useItemSSE.ts'
 import { useToast } from 'vue-toastification'
 
@@ -20,7 +20,7 @@ const toast = useToast()
 const feedStore = useFeedStore()
 const { activeFeed, feedFilter, collectionsFeedMap } = feedStore
 
-const { activeCollection } = collectionStore()
+const { activeCollection } = useCollectionStore()
 
 const itemStore = useItemStore()
 const { items, activeItem, hasMore, itemsLoading, cursor } = itemStore

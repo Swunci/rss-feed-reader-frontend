@@ -3,7 +3,7 @@ import { useCollectionStore } from '@/stores/collectionStore'
 import { useFeedStore } from '@/stores/feedStore'
 import type { Collection } from '@/types/collection'
 import type { Feed } from '@/types/feed'
-import { BookHeartIcon, EyeOffIcon, LayersIcon } from 'lucide-vue-next'
+import { BookHeartIcon, EyeOffIcon, LayersIcon, ChevronsRightIcon, RssIcon } from 'lucide-vue-next'
 import { computed, watch } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 
