@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FeedSideTab from './components/FeedsTab.vue'
+import FeedsTab from './components/FeedsTab/FeedsTab.vue'
 import ItemsTab from './components/ItemsTab.vue'
 import ItemContent from './components/ItemContent.vue'
 import './styles/shared.css'
@@ -11,38 +11,29 @@ import { useItemSSE } from './composables/api/useItemSSE'
 import RenameFeedModal from './components/modals/RenameFeedModal.vue'
 import { useToast } from 'vue-toastification'
 import AddCollectionModal from './components/modals/AddCollectionModal.vue'
-import { collectionStore } from './stores/collectionStore'
+import { useCollectionStore } from './stores/collectionStore'
 import DeleteCollectionModal from './components/modals/DeleteCollectionModal.vue'
-import type { Feed } from './types/feed'
-import type { Collection } from './types/collection'
 import RenameCollectionModal from './components/modals/RenameCollectionModal.vue'
+import { ref, watch } from 'vue'
 
 useItemSSE()
 
 const toast = useToast()
 
+const collectionStore = useCollectionStore()
 const {
   activeCollection,
-  showAddCollectionModal,
-  showDeleteCollectionModal,
-  showRenameCollectionModal,
   PostCollectionError,
   loadingPostCollection,
   patchCollectionError,
   loadingPatchCollection,
   deleteCollectionError,
   loadingDeleteCollection,
-  handleAddCollection,
-  handleDeleteCollection,
-  handlePatchCollection,
-} = collectionStore()
+} = collectionStore
 
 const feedStore = useFeedStore()
 const {
   activeFeed,
-  showAddFeedModal,
-  showDeleteFeedModal,
-  showRenameFeedModal,
   loadingPostFeed,
   postFeedError,
   loadingDeleteFeed,
@@ -50,20 +41,21 @@ const {
   loadingPatchFeed,
   patchFeedError,
   feedFilter,
-  handleAddFeed,
-  handleDeleteFeed,
-  handleRefreshFeeds,
-  handleRenameFeed,
-  viewAll,
-  viewUnread,
-  viewFavorites,
 } = feedStore
 
 const itemStore = useItemStore()
 const { activeItem, hasMore, items, cursor } = itemStore
 
-const handleRefresh = () => {
-  handleRefreshFeeds()
+const showAddCollectionModal = ref(false)
+const showDeleteCollectionModal = ref(false)
+const showRenameCollectionModal = ref(false)
+
+const showAddFeedModal = ref(false)
+const showDeleteFeedModal = ref(false)
+const showRenameFeedModal = ref(false)
+
+const handleRefresh = async () => {
+  await feedStore.refreshFeeds()
   handleRefreshItems()
 }
 
@@ -101,36 +93,58 @@ const clearRenameModal = () => {
   patchCollectionError.value = null
 }
 
-const handleSelectAll = () => {
-  activeFeed.value = null
-  activeCollection.value = null
+const handleAddCollection = async (name: string) => {
+  if (await collectionStore.addCollection(name)) {
+    showAddCollectionModal.value = false
+  }
 }
 
-const handleFeedSelection = (feed: Feed) => {
-  activeFeed.value = feed
-  activeCollection.value = null
+const handleDeleteCollection = async (collectionId: number) => {
+  if (await collectionStore.removeCollection(collectionId)) {
+    showDeleteCollectionModal.value = false
+  }
 }
 
-const handleCollectionSelection = (collection: Collection) => {
-  activeCollection.value = collection
-  activeFeed.value = null
+const handleRenameCollection = async (collectionId: number, name: string) => {
+  if (await collectionStore.updateCollection(collectionId, name)) {
+    showRenameCollectionModal.value = false
+  }
 }
+
+const handleAddFeed = async (url: string) => {
+  if (await feedStore.addFeed(url)) {
+    showAddFeedModal.value = false
+  }
+}
+
+const handleDeleteFeed = async (feedId: number) => {
+  if (await feedStore.removeFeed(feedId)) {
+    showDeleteFeedModal.value = false
+  }
+}
+
+const handleRenameFeed = async (feedId: number, name: string) => {
+  if (await feedStore.renameFeed(feedId, name)) {
+    showDeleteFeedModal.value = false
+  }
+}
+
+const { itemEvent } = useItemSSE()
+
+watch(itemEvent, async () => {
+  console.log('Updating feeds counts')
+  await feedStore.fetchFilteredFeeds()
+})
 </script>
 
 <template>
   <div class="app-layout">
-    <FeedSideTab
-      @selectAll="handleSelectAll"
-      @selectFeed="handleFeedSelection"
-      @selectCollection="handleCollectionSelection"
+    <FeedsTab
       @addFeed="showAddFeedModal = true"
       @addCollection="showAddCollectionModal = true"
-      @delete="activeFeed ? (showDeleteFeedModal = true) : toast.error('No feed selected')"
+      @deleteFeed="activeFeed ? (showDeleteFeedModal = true) : toast.error('No feed selected')"
       @refresh="handleRefresh"
       @rename="activeFeed ? (showRenameFeedModal = true) : toast.error('No feed selected')"
-      @all="viewAll"
-      @unread="viewUnread"
-      @favorite="viewFavorites"
     />
     <ItemsTab />
     <ItemContent v-if="activeItem" />
@@ -147,7 +161,7 @@ const handleCollectionSelection = (collection: Collection) => {
       :loading="loadingDeleteFeed"
       :error="deleteFeedError"
       @close="clearDeleteModal"
-      @confirm="handleDeleteFeed"
+      @submit="handleDeleteFeed"
     />
     <RenameFeedModal
       v-if="showRenameFeedModal && activeFeed"
@@ -179,7 +193,7 @@ const handleCollectionSelection = (collection: Collection) => {
       :loading="loadingPatchCollection"
       :error="patchCollectionError"
       @close="clearRenameModal"
-      @submit="handlePatchCollection"
+      @submit="handleRenameCollection"
     />
   </div>
 </template>
