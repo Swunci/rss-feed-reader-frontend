@@ -107,7 +107,7 @@ const refreshFeeds = async () => {
 }
 
 const moveFeedIntoCollection = async (e: DraggableEvent, collectionId: number) => {
-  const feedId = uncollectedFeeds.value[e.oldIndex!]!.id
+  const feedId = Number(e.item.dataset.id)
   console.log(`Add feed (${feedId}) to collection (${collectionId})`)
   const success = await patchFeed(endpoints.feeds.update(feedId), { collection_id: collectionId })
   if (success) {

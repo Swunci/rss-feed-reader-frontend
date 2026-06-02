@@ -97,12 +97,12 @@ watch(activeFeed, () => {
         group="feeds"
         class="draggable-area"
         @add="(e) => feedStore.moveFeedIntoCollection(e, collection.id)"
-        @remove="(e) => feedStore.moveFeedOutOfCollection(e)"
       >
         <template v-if="expandedCollections.has(collection.id)">
           <div
             v-for="feed in collectionsFeedMap[collection.id]"
             :key="feed.id"
+            :data-id="feed.id"
             :class="['feed-item', 'indented', activeFeed?.id === feed.id ? 'active' : '']"
             @click="handleFeedSelection(feed)"
           >
@@ -113,10 +113,17 @@ watch(activeFeed, () => {
         </template>
       </VueDraggable>
     </div>
-    <VueDraggable v-model="uncollectedFeeds" :sort="false" group="feeds" class="feed-list">
+    <VueDraggable
+      v-model="uncollectedFeeds"
+      :sort="false"
+      group="feeds"
+      class="feed-list"
+      @add="(e) => feedStore.moveFeedOutOfCollection(e)"
+    >
       <div
         v-for="feed in uncollectedFeeds"
         :key="feed.id"
+        :data-id="feed.id"
         :class="['feed-item', activeFeed?.id === feed.id ? 'active' : '']"
         @click="handleFeedSelection(feed)"
       >
