@@ -3,9 +3,7 @@ import {
   EyeOffIcon,
   LayersIcon,
   PlusIcon,
-  TrashIcon,
   RefreshCwIcon,
-  SquarePenIcon,
   BookHeartIcon,
   EllipsisIcon,
   FolderPlusIcon,
@@ -22,9 +20,7 @@ const { feedFilter } = feedStore
 const emit = defineEmits<{
   addFeed: []
   addCollection: []
-  deleteFeed: []
   refresh: []
-  renameFeed: []
 }>()
 
 const handleViewAll = async () => {
@@ -115,32 +111,6 @@ const dropdownRef = ref<InstanceType<typeof DropdownMenu> | null>(null)
         >
           <span class="dropdown-item-icon"><RefreshCwIcon /></span>
           Refresh Feeds
-        </button>
-        <button
-          class="dropdown-item"
-          @click="
-            () => {
-              emit('renameFeed')
-              dropdownRef?.close()
-            }
-          "
-        >
-          <span class="dropdown-item-icon"><SquarePenIcon /></span>
-          Rename Feed
-        </button>
-        <button
-          class="dropdown-item danger"
-          @click="
-            () => {
-              emit('deleteFeed')
-              dropdownRef?.close()
-            }
-          "
-        >
-          <span class="dropdown-item-icon">
-            <TrashIcon />
-          </span>
-          Delete Feed
         </button>
       </DropdownMenu>
     </ActionsBar>

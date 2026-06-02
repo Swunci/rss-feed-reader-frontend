@@ -4,18 +4,50 @@ import { useFeedStore } from '@/stores/feedStore'
 import { useItemStore } from '@/stores/itemStore'
 import type { Collection } from '@/types/collection'
 import type { Feed } from '@/types/feed'
-import { BookHeartIcon, EyeOffIcon, LayersIcon, ChevronsRightIcon, RssIcon } from 'lucide-vue-next'
-import { computed, watch } from 'vue'
+import RenameCollectionModal from '../modals/RenameCollectionModal.vue'
+import DeleteCollectionModal from '../modals/DeleteCollectionModal.vue'
+import RenameFeedModal from '../modals/RenameFeedModal.vue'
+import DeleteFeedModal from '../modals/DeleteFeedModal.vue'
+import CollectionItem from './CollectionItem.vue'
+import FeedItem from './FeedItem.vue'
+
+import { BookHeartIcon, EyeOffIcon, LayersIcon } from 'lucide-vue-next'
+import { computed, ref, watch } from 'vue'
 import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus'
 
 const collectionStore = useCollectionStore()
-const { activeCollection, collections, expandedCollections, collectionsFeedMap } = collectionStore
+const {
+  activeCollection,
+  collections,
+  expandedCollections,
+  collectionsFeedMap,
+  loadingDeleteCollection,
+  deleteCollectionError,
+  patchCollectionError,
+  loadingPatchCollection,
+} = collectionStore
 
 const feedStore = useFeedStore()
-const { activeFeed, feeds, feedFilter, uncollectedFeeds, idFeedMap } = feedStore
+const {
+  activeFeed,
+  feeds,
+  feedFilter,
+  uncollectedFeeds,
+  idFeedMap,
+  loadingDeleteFeed,
+  deleteFeedError,
+  loadingPatchFeed,
+  patchFeedError,
+} = feedStore
 
 const itemStore = useItemStore()
 const { cursor } = itemStore
+
+const showDeleteCollectionModal = ref(false)
+const showRenameCollectionModal = ref(false)
+
+const showDeleteFeedModal = ref(false)
+const showRenameFeedModal = ref(false)
 
 const filterConfig = {
   all: { label: 'All Feeds', icon: LayersIcon },
@@ -83,6 +115,57 @@ const handleMoveOutOfCollection = async (e: DraggableEvent) => {
   }
 }
 
+const clearModals = () => {
+  showDeleteFeedModal.value = false
+  deleteFeedError.value = null
+  showDeleteCollectionModal.value = false
+  deleteCollectionError.value = null
+  showRenameFeedModal.value = false
+  patchFeedError.value = null
+  showRenameCollectionModal.value = false
+  patchCollectionError.value = null
+}
+
+type ModalType = 'rename' | 'delete'
+
+function openFeedModal(feed: Feed, type: ModalType) {
+  collectionStore.activeCollection.value = null
+  feedStore.activeFeed.value = feed
+  if (type === 'rename') showRenameFeedModal.value = true
+  else showDeleteFeedModal.value = true
+}
+
+function openCollectionModal(collection: Collection, type: ModalType) {
+  feedStore.activeFeed.value = null
+  collectionStore.activeCollection.value = collection
+  if (type === 'rename') showRenameCollectionModal.value = true
+  else showDeleteCollectionModal.value = true
+}
+
+const handleDeleteFeed = async (feedId: number) => {
+  if (await feedStore.removeFeed(feedId)) {
+    showDeleteFeedModal.value = false
+  }
+}
+
+const handleRenameFeed = async (feedId: number, name: string) => {
+  if (await feedStore.renameFeed(feedId, name)) {
+    showDeleteFeedModal.value = false
+  }
+}
+
+const handleDeleteCollection = async (collectionId: number) => {
+  if (await collectionStore.removeCollection(collectionId)) {
+    showDeleteCollectionModal.value = false
+  }
+}
+
+const handleRenameCollection = async (collectionId: number, name: string) => {
+  if (await collectionStore.updateCollection(collectionId, name)) {
+    showRenameCollectionModal.value = false
+  }
+}
+
 watch(
   [feeds, collections],
   () => {
@@ -119,41 +202,23 @@ watch(activeFeed, () => {
     <span class="feed-name">{{ filterConfig[feedFilter].label }}</span>
   </div>
   <div class="collection-list">
-    <div v-for="collection in collections" :key="collection.id" class="collection-item">
-      <div
-        :class="['collection-header', activeCollection?.id === collection.id ? 'active' : '']"
-        @click="handleCollectionSelection(collection)"
-      >
-        <ChevronsRightIcon
-          :size="14"
-          :class="['collection-chevron', expandedCollections.has(collection.id) ? 'expanded' : '']"
-        />
-        <span class="collection-name">{{ collection.name }}</span>
-        <span class="feed-count">{{ collectionCounts[collection.id] }}</span>
-      </div>
-      <VueDraggable
-        v-model="collectionsFeedMap[collection.id]!"
-        :sort="false"
-        :data-collection-id="collection.id"
-        group="feeds"
-        class="draggable-area"
-        @add="(e) => handleMoveIntoCollection(e, collection.id)"
-      >
-        <template v-if="expandedCollections.has(collection.id)">
-          <div
-            v-for="feed in collectionsFeedMap[collection.id]"
-            :key="feed.id"
-            :data-id="feed.id"
-            :class="['feed-item', 'indented', activeFeed?.id === feed.id ? 'active' : '']"
-            @click="handleFeedSelection(feed)"
-          >
-            <RssIcon :size="14" class="feed-icon" />
-            <span class="feed-name">{{ feed.name }}</span>
-            <span class="feed-count">{{ feed.count }}</span>
-          </div>
-        </template>
-      </VueDraggable>
-    </div>
+    <CollectionItem
+      v-for="collection in collections"
+      :key="collection.id"
+      :collection="collection"
+      v-model:feeds="collectionsFeedMap[collection.id]!"
+      :expanded="expandedCollections.has(collection.id)"
+      :active="activeCollection?.id === collection.id"
+      :count="collectionCounts[collection.id] ?? 0"
+      :activeFeed="activeFeed"
+      @select="handleCollectionSelection"
+      @rename="(c) => openCollectionModal(c, 'rename')"
+      @delete="(c) => openCollectionModal(c, 'delete')"
+      @selectFeed="handleFeedSelection"
+      @renameFeed="(f) => openFeedModal(f, 'rename')"
+      @deleteFeed="(f) => openFeedModal(f, 'delete')"
+      @feedAdded="handleMoveIntoCollection"
+    />
     <VueDraggable
       v-model="uncollectedFeeds"
       :sort="false"
@@ -161,25 +226,57 @@ watch(activeFeed, () => {
       class="feed-list"
       @add="(e) => handleMoveOutOfCollection(e)"
     >
-      <div
+      <FeedItem
         v-for="feed in uncollectedFeeds"
         :key="feed.id"
-        :data-id="feed.id"
-        :class="['feed-item', activeFeed?.id === feed.id ? 'active' : '']"
-        @click="handleFeedSelection(feed)"
-      >
-        <RssIcon :size="14" class="feed-icon" />
-        <span class="feed-name">{{ feed.name }}</span>
-        <span class="feed-count">{{ feed.count }}</span>
-      </div>
+        :feed="feed"
+        :active="activeFeed?.id === feed.id"
+        @select="handleFeedSelection"
+        @rename="(f) => openFeedModal(f, 'rename')"
+        @delete="(f) => openFeedModal(f, 'delete')"
+      />
     </VueDraggable>
   </div>
+  <DeleteCollectionModal
+    v-if="showDeleteCollectionModal && activeCollection"
+    :collection="activeCollection"
+    :loading="loadingDeleteCollection"
+    :error="deleteCollectionError"
+    @close="clearModals"
+    @sumbit="handleDeleteCollection"
+  />
+  <RenameCollectionModal
+    v-if="showRenameCollectionModal && activeCollection"
+    :collection="activeCollection"
+    :loading="loadingPatchCollection"
+    :error="patchCollectionError"
+    @close="clearModals"
+    @submit="handleRenameCollection"
+  />
+  <DeleteFeedModal
+    v-if="showDeleteFeedModal && activeFeed"
+    :feed="activeFeed"
+    :loading="loadingDeleteFeed"
+    :error="deleteFeedError"
+    @close="clearModals"
+    @submit="handleDeleteFeed"
+  />
+  <RenameFeedModal
+    v-if="showRenameFeedModal && activeFeed"
+    :feed="activeFeed"
+    :loading="loadingPatchFeed"
+    :error="patchFeedError"
+    @close="clearModals"
+    @submit="handleRenameFeed"
+  />
 </template>
 
+css
 <style scoped>
-css.feed-list {
+.feed-list {
   overflow-y: auto;
 }
+
 .feed-item {
   display: flex;
   align-items: center;
@@ -190,6 +287,7 @@ css.feed-list {
   color: #111827;
   transition: background 0.15s;
   width: 100%;
+  height: 40px;
 }
 .feed-item:hover {
   background: #f3f4f6;
@@ -197,67 +295,14 @@ css.feed-list {
 .feed-item.active {
   background: #f3f4f6;
 }
-.feed-item.indented {
-  padding-left: 2rem;
-}
-.feed-icon {
-  color: #9ca3af;
-  flex-shrink: 0;
-}
 .feed-name {
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .collection-list {
   overflow-y: auto;
-}
-.collection-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  font-size: 13px;
-  color: #111827;
-  transition: background 0.15s;
-}
-.collection-header {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  cursor: pointer;
-  font-size: 13px;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  width: 100%;
-}
-.collection-header:hover {
-  background: #f3f4f6;
-}
-.collection-header.active {
-  background: #f3f4f6;
-}
-.collection-name {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.collection-icon {
-  color: #9ca3af;
-  flex-shrink: 0;
-}
-.collection-chevron {
-  color: #9ca3af;
-  flex-shrink: 0;
-  transition: transform 0.15s;
-}
-.collection-chevron.expanded {
-  transform: rotate(90deg);
-}
-.draggable-area {
-  width: 100%;
-  height: 100%;
 }
 </style>
