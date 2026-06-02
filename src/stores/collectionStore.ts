@@ -4,11 +4,14 @@ import { useFetch } from '@/composables/api/useFetch'
 import { usePatch } from '@/composables/api/usePatch'
 import { usePost } from '@/composables/api/usePost'
 import type { Collection } from '@/types/collection'
+import type { Feed } from '@/types/feed'
 import { ref } from 'vue'
 
 const activeCollection = ref<Collection | null>(null)
 
 const expandedCollections = ref<Set<number>>(new Set())
+
+const collectionsFeedMap = ref<Record<number, Feed[]>>({})
 
 const {
   data: collections,
@@ -33,10 +36,14 @@ const {
   deleteData: deleteCollection,
 } = useDelete()
 
-const toggleCollection = (collection_id: number) => {
-  expandedCollections.value.has(collection_id)
-    ? expandedCollections.value.delete(collection_id)
-    : expandedCollections.value.add(collection_id)
+const toggleCollection = (collectionId: number) => {
+  expandedCollections.value.has(collectionId)
+    ? expandedCollections.value.delete(collectionId)
+    : expandedCollections.value.add(collectionId)
+}
+
+const expandCollection = (collectionId: number) => {
+  expandedCollections.value.add(collectionId)
 }
 
 const addCollection = async (name: string) => {
@@ -72,6 +79,11 @@ const updateCollection = async (collectionId: number, newName: string) => {
   return success
 }
 
+function isInActiveCollection(feedId: number | undefined): boolean {
+  if (!activeCollection.value || !feedId) return false
+  return collectionsFeedMap.value[activeCollection.value.id]?.some((f) => f.id === feedId) ?? false
+}
+
 function init() {
   fetchCollections(endpoints.collections.getAll)
 }
@@ -91,10 +103,13 @@ export function useCollectionStore() {
     patchCollectionError,
     loadingDeleteCollection,
     deleteCollectionError,
+    collectionsFeedMap,
     fetchCollections,
     toggleCollection,
+    expandCollection,
     addCollection,
     removeCollection,
     updateCollection,
+    isInActiveCollection,
   }
 }

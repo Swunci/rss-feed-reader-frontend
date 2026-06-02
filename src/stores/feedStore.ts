@@ -1,5 +1,5 @@
 import { type FeedFilter, type Feed, type FeedAPI } from '@/types/feed'
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useDelete } from '../composables/api/useDelete'
 import { useFetch } from '../composables/api/useFetch'
 import { usePost } from '../composables/api/usePost'
@@ -11,8 +11,19 @@ import type { DraggableEvent } from 'vue-draggable-plus'
 const activeFeed = ref<Feed | null>(null)
 const feedFilter = ref<FeedFilter>('all')
 
-const collectionsFeedMap = ref<Record<number, Feed[]>>({})
 const uncollectedFeeds = ref<Feed[]>([])
+
+const idFeedMap = computed(() => {
+  return (
+    feeds.value?.reduce(
+      (acc, feed) => {
+        acc[feed.id] = feed
+        return acc
+      },
+      {} as Record<number, Feed>,
+    ) ?? {}
+  )
+})
 
 const {
   data: feeds,
@@ -29,11 +40,6 @@ const {
 
 const { loading: loadingPatchFeed, error: patchFeedError, patchData: patchFeed } = usePatch()
 const { loading: loadingDeleteFeed, error: deleteFeedError, deleteData: deleteFeed } = useDelete()
-
-const filteredFeeds = computed(() => {
-  if (feedFilter.value === 'all') return feeds.value ?? []
-  return feeds.value?.filter((f) => f.count > 0 || f.id === activeFeed.value?.id) ?? []
-})
 
 const fetchFilteredFeeds = async () => {
   console.log(
@@ -142,7 +148,6 @@ export function useFeedStore() {
     activeFeed,
     feedFilter,
     feeds,
-    filteredFeeds,
     feedsLoading,
     feedsError,
     loadingPostFeed,
@@ -151,8 +156,8 @@ export function useFeedStore() {
     deleteFeedError,
     loadingPatchFeed,
     patchFeedError,
-    collectionsFeedMap,
     uncollectedFeeds,
+    idFeedMap,
     addFeed,
     removeFeed,
     refreshFeeds,

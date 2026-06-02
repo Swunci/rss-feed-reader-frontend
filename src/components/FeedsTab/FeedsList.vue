@@ -8,10 +8,10 @@ import { computed, watch } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 
 const collectionStore = useCollectionStore()
-const { activeCollection, collections, expandedCollections } = collectionStore
+const { activeCollection, collections, expandedCollections, collectionsFeedMap } = collectionStore
 
 const feedStore = useFeedStore()
-const { activeFeed, feeds, feedFilter, collectionsFeedMap, uncollectedFeeds } = feedStore
+const { activeFeed, feeds, feedFilter, uncollectedFeeds, idFeedMap } = feedStore
 
 const filterConfig = {
   all: { label: 'All Feeds', icon: LayersIcon },
@@ -58,6 +58,16 @@ watch(
   },
   { immediate: true },
 )
+
+watch(activeFeed, () => {
+  if (activeFeed.value != null) {
+    const collectionId = idFeedMap.value[activeFeed.value.id]?.collectionId
+    console.log(collectionId)
+    if (collectionId != null) {
+      collectionStore.expandCollection(collectionId)
+    }
+  }
+})
 </script>
 
 <template>

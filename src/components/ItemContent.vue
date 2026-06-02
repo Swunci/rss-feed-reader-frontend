@@ -12,12 +12,16 @@ import { computed } from 'vue'
 import { fixLinks } from '@/utils/html'
 import { useItemStore } from '@/stores/itemStore'
 import { useFeedStore } from '@/stores/feedStore'
+import type { Feed } from '@/types/feed.ts'
+import { useCollectionStore } from '@/stores/collectionStore.ts'
 
 const itemStore = useItemStore()
-const { activeItem } = useItemStore()
+const { activeItem } = itemStore
 
 const feedStore = useFeedStore()
-const { feeds, feedFilter } = useFeedStore()
+const { activeFeed, feeds, feedFilter } = feedStore
+
+const { activeCollection } = useCollectionStore()
 
 const safeHtml = computed(() => {
   if (activeItem.value) {
@@ -26,8 +30,8 @@ const safeHtml = computed(() => {
   return ''
 })
 
-const feedName = computed(() => {
-  return feeds.value?.find((f) => f.id == activeItem.value?.feedId)?.name
+const feed = computed(() => {
+  return feeds.value?.find((f) => f.id == activeItem.value?.feedId)
 })
 
 const handleOpenLink = () => {
@@ -55,6 +59,13 @@ const handleFavoriteItem = async () => {
   const success = await itemStore.toggleFavorite()
   if (!success && feedFilter.value === 'favorite')
     feedStore.updateFeedItemCount(activeItem.value.feedId, wasFavorite ? 1 : -1)
+}
+
+const handleFeedSelection = (feed: Feed | undefined) => {
+  if (feed) {
+    activeFeed.value = feed
+    activeCollection.value = null
+  }
 }
 </script>
 
@@ -84,7 +95,9 @@ const handleFavoriteItem = async () => {
         <h1>
           <b>{{ activeItem!.title }}</b>
         </h1>
-        <div>{{ feedName }}</div>
+        <span class="feed-name" @click.stop="handleFeedSelection(feed)">
+          {{ feed?.name }}
+        </span>
         <div>{{ formatDate(activeItem!.publishedAt) }}</div>
         <hr />
         <div v-html="safeHtml"></div>
@@ -121,5 +134,18 @@ const handleFavoriteItem = async () => {
   gap: 0.25rem;
   border-radius: 6px;
   padding: 2px;
+}
+
+.feed-name {
+  font-size: 16px;
+  color: #9ca3af;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+.feed-name:hover {
+  color: #6b7280;
 }
 </style>

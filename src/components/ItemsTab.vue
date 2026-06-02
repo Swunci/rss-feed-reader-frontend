@@ -18,9 +18,10 @@ import { useToast } from 'vue-toastification'
 const toast = useToast()
 
 const feedStore = useFeedStore()
-const { activeFeed, feedFilter, collectionsFeedMap } = feedStore
+const { activeFeed, feedFilter, idFeedMap } = feedStore
 
-const { activeCollection } = useCollectionStore()
+const collectionStore = useCollectionStore()
+const { activeCollection } = collectionStore
 
 const itemStore = useItemStore()
 const { items, activeItem, hasMore, itemsLoading, cursor } = itemStore
@@ -63,7 +64,7 @@ watch(itemEvent, async () => {
   if (
     newEventFeedId === activeFeed.value?.id ||
     (!activeCollection && !activeFeed) ||
-    isInActiveCollection(newEventFeedId)
+    collectionStore.isInActiveCollection(newEventFeedId)
   ) {
     await itemStore.getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
     itemStore.mergeNewItems()
@@ -74,11 +75,6 @@ onMounted(async () => {
   await itemStore.getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
   itemStore.appendNewItems()
 })
-
-function isInActiveCollection(feedId: number | undefined): boolean {
-  if (!activeCollection.value || !feedId) return false
-  return collectionsFeedMap.value[activeCollection.value.id]?.some((f) => f.id === feedId) ?? false
-}
 
 const loadMore = async () => {
   if (itemsLoading.value) return
@@ -113,6 +109,14 @@ const handleMarkAllRead = async () => {
     if (feedFilter.value === 'unread') feedStore.updateFeedItemCount(activeFeed.value.id, count)
   }
 }
+
+const handleFeedSelection = (feedId: number) => {
+  const feed = idFeedMap.value[feedId]
+  if (feed) {
+    activeFeed.value = feed
+    activeCollection.value = null
+  }
+}
 </script>
 
 <template>
@@ -136,6 +140,9 @@ const handleMarkAllRead = async () => {
         :class="['news-item', activeItem?.id === item.id ? 'active' : '']"
         @click="handleSelectItem(item)"
       >
+        <button class="feed-name" @click.stop="handleFeedSelection(item.feedId)">
+          {{ idFeedMap[item.feedId]?.name }}
+        </button>
         <div class="news-item-inner">
           <span v-if="item.isFavorite" class="favorite-star" />
           <span v-else-if="!item.isRead" class="unread-dot" />
@@ -163,6 +170,18 @@ const handleMarkAllRead = async () => {
 .items-list {
   flex: 1;
   overflow-y: auto;
+}
+.feed-name {
+  font-size: 11px;
+  color: #9ca3af;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+.feed-name:hover {
+  color: #6b7280;
 }
 .news-item {
   padding: 10px 12px;
