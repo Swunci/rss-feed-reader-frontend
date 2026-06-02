@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { useCollectionStore } from '@/stores/collectionStore'
 import { useFeedStore } from '@/stores/feedStore'
+import { useItemStore } from '@/stores/itemStore'
 import type { Collection } from '@/types/collection'
 import type { Feed } from '@/types/feed'
 import { BookHeartIcon, EyeOffIcon, LayersIcon, ChevronsRightIcon, RssIcon } from 'lucide-vue-next'
 import { computed, watch } from 'vue'
-import { VueDraggable } from 'vue-draggable-plus'
+import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus'
 
 const collectionStore = useCollectionStore()
 const { activeCollection, collections, expandedCollections, collectionsFeedMap } = collectionStore
 
 const feedStore = useFeedStore()
 const { activeFeed, feeds, feedFilter, uncollectedFeeds, idFeedMap } = feedStore
+
+const itemStore = useItemStore()
+const { cursor } = itemStore
 
 const filterConfig = {
   all: { label: 'All Feeds', icon: LayersIcon },
@@ -41,6 +45,42 @@ const handleCollectionSelection = (collection: Collection) => {
   collectionStore.toggleCollection(collection.id)
   activeCollection.value = collection
   activeFeed.value = null
+}
+
+const handleMoveIntoCollection = async (e: DraggableEvent, collectionId: number) => {
+  const feedId = Number(e.item.dataset.id)
+  if (
+    (await feedStore.moveFeedIntoCollection(feedId, collectionId)) &&
+    activeCollection.value?.id == collectionId
+  ) {
+    itemStore.resetItems()
+    await itemStore.getItemsFromAPI(
+      activeFeed.value,
+      activeCollection.value,
+      feedFilter.value,
+      cursor.value,
+    )
+    itemStore.appendNewItems()
+  }
+}
+
+const handleMoveOutOfCollection = async (e: DraggableEvent) => {
+  const feedId = uncollectedFeeds.value[e.newIndex!]!.id
+  const collectionId = Number(e.from.dataset.collectionId)
+  console.log(collectionId + ' asdfasdf')
+  if (
+    (await feedStore.moveFeedOutOfCollection(feedId)) &&
+    activeCollection.value?.id == collectionId
+  ) {
+    itemStore.resetItems()
+    await itemStore.getItemsFromAPI(
+      activeFeed.value,
+      activeCollection.value,
+      feedFilter.value,
+      cursor.value,
+    )
+    itemStore.appendNewItems()
+  }
 }
 
 watch(
@@ -94,9 +134,10 @@ watch(activeFeed, () => {
       <VueDraggable
         v-model="collectionsFeedMap[collection.id]!"
         :sort="false"
+        :data-collection-id="collection.id"
         group="feeds"
         class="draggable-area"
-        @add="(e) => feedStore.moveFeedIntoCollection(e, collection.id)"
+        @add="(e) => handleMoveIntoCollection(e, collection.id)"
       >
         <template v-if="expandedCollections.has(collection.id)">
           <div
@@ -118,7 +159,7 @@ watch(activeFeed, () => {
       :sort="false"
       group="feeds"
       class="feed-list"
-      @add="(e) => feedStore.moveFeedOutOfCollection(e)"
+      @add="(e) => handleMoveOutOfCollection(e)"
     >
       <div
         v-for="feed in uncollectedFeeds"

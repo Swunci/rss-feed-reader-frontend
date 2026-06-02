@@ -106,8 +106,7 @@ const refreshFeeds = async () => {
   return success
 }
 
-const moveFeedIntoCollection = async (e: DraggableEvent, collectionId: number) => {
-  const feedId = Number(e.item.dataset.id)
+const moveFeedIntoCollection = async (feedId: number, collectionId: number) => {
   console.log(`Add feed (${feedId}) to collection (${collectionId})`)
   const success = await patchFeed(endpoints.feeds.update(feedId), { collection_id: collectionId })
   if (success) {
@@ -120,10 +119,10 @@ const moveFeedIntoCollection = async (e: DraggableEvent, collectionId: number) =
         return f
       }) ?? []
   }
+  return success
 }
 
-const moveFeedOutOfCollection = async (e: DraggableEvent) => {
-  const feedId = uncollectedFeeds.value[e.newIndex!]!.id
+const moveFeedOutOfCollection = async (feedId: number) => {
   const success = await deleteFeed(endpoints.feeds.removeCollection(feedId))
   if (success) {
     console.log(`Feed removed from collection`)
@@ -135,6 +134,7 @@ const moveFeedOutOfCollection = async (e: DraggableEvent) => {
         return f
       }) ?? []
   }
+  return success
 }
 
 function init() {

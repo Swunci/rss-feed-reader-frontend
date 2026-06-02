@@ -67,6 +67,13 @@ const getItemsFromAPI = async (
   }
 }
 
+const resetItems = () => {
+  items.value = []
+  cursor.value = ''
+  hasMore.value = true
+  activeItem.value = null
+}
+
 const appendNewItems = () => {
   if (fetchedItems.value) {
     items.value = [...items.value, ...fetchedItems.value]
@@ -168,5 +175,6 @@ export function useItemStore() {
     getItemsFromAPI,
     mergeNewItems,
     appendNewItems,
+    resetItems,
   }
 }

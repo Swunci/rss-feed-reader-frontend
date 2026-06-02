@@ -45,10 +45,7 @@ const filteredItems = computed(() => {
 const activeSelection = computed(() => activeFeed.value ?? activeCollection.value)
 
 watch([activeSelection, feedFilter], async () => {
-  items.value = []
-  cursor.value = ''
-  hasMore.value = true
-  activeItem.value = null
+  itemStore.resetItems()
   await itemStore.getItemsFromAPI(
     activeFeed.value,
     activeCollection.value,
