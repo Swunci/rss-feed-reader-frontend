@@ -13,7 +13,7 @@ import FeedItem from './FeedItem.vue'
 
 import { BookHeartIcon, EyeOffIcon, LayersIcon } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
-import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus'
+import { VueDraggable, type DraggableEvent, type MoveEvent } from 'vue-draggable-plus'
 
 const collectionStore = useCollectionStore()
 const {
@@ -22,8 +22,8 @@ const {
   expandedCollections,
   loadingDeleteCollection,
   deleteCollectionError,
-  patchCollectionError,
-  loadingPatchCollection,
+  PutCollectionError,
+  loadingPutCollection,
   collectionFeedsMap,
 } = collectionStore
 
@@ -126,7 +126,7 @@ const clearModals = () => {
   showRenameFeedModal.value = false
   patchFeedError.value = null
   showRenameCollectionModal.value = false
-  patchCollectionError.value = null
+  PutCollectionError.value = null
 }
 
 type ModalType = 'rename' | 'delete'
@@ -172,7 +172,10 @@ const handleRenameCollection = async (collectionId: number, name: string) => {
 watch(
   [feeds, collections],
   () => {
-    uncollectedFeeds.value = feeds.value?.filter((f) => f.collectionId == null) ?? []
+    uncollectedFeeds.value =
+      feeds.value
+        ?.filter((f) => f.collectionId == null)
+        .sort((a, b) => a.name.localeCompare(b.name)) ?? []
     collectionFeedsMap.value =
       collections.value?.reduce(
         (acc, collection) => {
@@ -184,6 +187,31 @@ watch(
   },
   { immediate: true },
 )
+
+const sortedCollections = computed(() =>
+  [...(collections.value ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+)
+
+const onMoveFromUncollected = (e: MoveEvent) => {
+  const ghost = document.querySelector('.drag-ghost-uncollected') as HTMLElement
+  if (!ghost) return true
+  console.log('e.from:', e.from.classList)
+  console.log('e.to:', e.to.classList)
+  if (e.to.classList.contains('draggable-area')) {
+    ghost.style.paddingLeft = '2rem'
+    ghost.style.background = 'rgb(121, 239, 255)'
+  } else {
+    ghost.style.paddingLeft = '0.75rem'
+    ghost.style.background = 'red'
+  }
+  return true
+}
+const onDragEnd = (e: DraggableEvent) => {
+  if (e.from === e.to) {
+    ;(e.item as HTMLElement).style.removeProperty('padding-left')
+    ;(e.item as HTMLElement).style.removeProperty('background')
+  }
+}
 </script>
 
 <template>
@@ -196,7 +224,7 @@ watch(
   </div>
   <div class="collection-list">
     <CollectionItem
-      v-for="collection in collections"
+      v-for="collection in sortedCollections"
       :key="collection.id"
       :collection="collection"
       v-model:feeds="collectionFeedsMap[collection.id]!"
@@ -217,6 +245,9 @@ watch(
       :sort="false"
       group="feeds"
       class="feed-list"
+      ghost-class="drag-ghost-uncollected"
+      @move="onMoveFromUncollected"
+      @end="onDragEnd"
       @add="(e) => handleMoveOutOfCollection(e)"
     >
       <FeedItem
@@ -241,8 +272,8 @@ watch(
   <RenameCollectionModal
     v-if="showRenameCollectionModal && activeCollection"
     :collection="activeCollection"
-    :loading="loadingPatchCollection"
-    :error="patchCollectionError"
+    :loading="loadingPutCollection"
+    :error="PutCollectionError"
     @close="clearModals"
     @submit="handleRenameCollection"
   />
@@ -264,10 +295,10 @@ watch(
   />
 </template>
 
-css
 <style scoped>
 .feed-list {
   overflow-y: auto;
+  min-height: 40px;
 }
 
 .feed-item {
@@ -294,8 +325,11 @@ css
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .collection-list {
   overflow-y: auto;
+}
+.dummy-zone {
+  height: 10px;
+  width: 100%;
 }
 </style>

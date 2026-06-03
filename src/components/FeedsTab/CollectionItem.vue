@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronsRightIcon, SquarePenIcon, TrashIcon } from 'lucide-vue-next'
-import { VueDraggable, type DraggableEvent } from 'vue-draggable-plus'
+import { VueDraggable, type DraggableEvent, type MoveEvent } from 'vue-draggable-plus'
 import type { Collection } from '@/types/collection'
 import type { Feed } from '@/types/feed'
 import FeedItem from './FeedItem.vue'
@@ -25,31 +25,54 @@ const emit = defineEmits<{
 }>()
 
 const localFeeds = defineModel<Feed[]>('feeds', { default: () => [] })
+
+const onMove = (e: MoveEvent) => {
+  const ghost = document.querySelector('.drag-ghost') as HTMLElement
+  if (!ghost) return true
+  console.log('e.to classes:', e.to.classList)
+  if (e.to.classList.contains('feed-list')) {
+    ghost.style.paddingLeft = '0.75rem'
+    ghost.style.background = 'red'
+  } else {
+    ghost.style.paddingLeft = '2rem'
+    ghost.style.background = 'rgb(121, 239, 255)'
+  }
+  return true
+}
 </script>
 
 <template>
   <div class="collection-item">
-    <div :class="['collection-header', active ? 'active' : '']" @click="emit('select', collection)">
-      <ChevronsRightIcon :size="14" :class="['collection-chevron', expanded ? 'expanded' : '']" />
-      <span class="collection-name">{{ collection.name }}</span>
-      <span class="feed-count">{{ count }}</span>
-      <div class="actions" @click.stop>
-        <span class="rename-btn" @click.stop="emit('rename', collection)">
-          <SquarePenIcon :size="14" />
-        </span>
-        <span class="delete-btn" @click.stop="emit('delete', collection)">
-          <TrashIcon :size="14" />
-        </span>
-      </div>
-    </div>
     <VueDraggable
       v-model="localFeeds"
       :sort="false"
       :data-collection-id="collection.id"
+      :swap-threshold="0.1"
+      filter=".collection-header"
+      :prevent-on-filter="true"
+      :invert-swap="true"
       group="feeds"
+      @move="onMove"
+      ghost-class="drag-ghost"
       class="draggable-area"
       @add="(e) => emit('feedAdded', e, collection.id)"
     >
+      <div
+        :class="['collection-header', active ? 'active' : '']"
+        @click="emit('select', collection)"
+      >
+        <ChevronsRightIcon :size="14" :class="['collection-chevron', expanded ? 'expanded' : '']" />
+        <span class="collection-name">{{ collection.name }}</span>
+        <span class="feed-count">{{ count }}</span>
+        <div class="actions" @click.stop>
+          <span class="rename-btn" @click.stop="emit('rename', collection)">
+            <SquarePenIcon :size="14" />
+          </span>
+          <span class="delete-btn" @click.stop="emit('delete', collection)">
+            <TrashIcon :size="14" />
+          </span>
+        </div>
+      </div>
       <template v-if="expanded">
         <FeedItem
           v-for="feed in feeds"

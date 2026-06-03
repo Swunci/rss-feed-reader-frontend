@@ -1,7 +1,7 @@
 import { endpoints } from '@/api/endpoints'
 import { useDelete } from '@/composables/api/useDelete'
 import { useFetch } from '@/composables/api/useFetch'
-import { usePatch } from '@/composables/api/usePatch'
+import { usePut } from '@/composables/api/usePut'
 import { usePost } from '@/composables/api/usePost'
 import type { Collection } from '@/types/collection'
 import type { Feed } from '@/types/feed'
@@ -26,10 +26,10 @@ const {
   postData: postCollection,
 } = usePost<Collection>()
 const {
-  loading: loadingPatchCollection,
-  error: patchCollectionError,
-  patchData: patchCollection,
-} = usePatch()
+  loading: loadingPutCollection,
+  error: PutCollectionError,
+  putData: putCollection,
+} = usePut()
 const {
   loading: loadingDeleteCollection,
   error: deleteCollectionError,
@@ -64,7 +64,7 @@ const removeCollection = async (collectionId: number) => {
 }
 
 const updateCollection = async (collectionId: number, newName: string) => {
-  const success = await patchCollection(endpoints.collections.update(collectionId), {
+  const success = await putCollection(endpoints.collections.update(collectionId), {
     name: newName,
   })
   if (success) {
@@ -99,8 +99,8 @@ export function useCollectionStore() {
     expandedCollections,
     loadingPostCollection,
     PostCollectionError,
-    loadingPatchCollection,
-    patchCollectionError,
+    loadingPutCollection,
+    PutCollectionError,
     loadingDeleteCollection,
     deleteCollectionError,
     collectionFeedsMap,
