@@ -20,24 +20,24 @@ const {
   activeCollection,
   collections,
   expandedCollections,
-  collectionsFeedMap,
   loadingDeleteCollection,
   deleteCollectionError,
   patchCollectionError,
   loadingPatchCollection,
+  collectionFeedsMap,
 } = collectionStore
 
 const feedStore = useFeedStore()
 const {
-  activeFeed,
   feeds,
+  activeFeed,
   feedFilter,
   uncollectedFeeds,
-  idFeedMap,
   loadingDeleteFeed,
   deleteFeedError,
   loadingPatchFeed,
   patchFeedError,
+  idFeedMap,
 } = feedStore
 
 const itemStore = useItemStore()
@@ -57,7 +57,7 @@ const filterConfig = {
 
 const collectionCounts = computed(() => {
   const counts: Record<number, number> = {}
-  for (const [collectionId, feeds] of Object.entries(collectionsFeedMap.value)) {
+  for (const [collectionId, feeds] of Object.entries(collectionFeedsMap.value)) {
     counts[Number(collectionId)] = feeds.reduce((sum, f) => sum + (f.count ?? 0), 0)
   }
   return counts
@@ -71,6 +71,10 @@ const handleSelectAll = () => {
 const handleFeedSelection = (feed: Feed) => {
   activeFeed.value = feed
   activeCollection.value = null
+  const collectionId = idFeedMap.value[feed.id]?.collectionId
+  if (collectionId !== null && collectionId !== undefined) {
+    collectionStore.expandCollection(collectionId)
+  }
 }
 
 const handleCollectionSelection = (collection: Collection) => {
@@ -97,9 +101,8 @@ const handleMoveIntoCollection = async (e: DraggableEvent, collectionId: number)
 }
 
 const handleMoveOutOfCollection = async (e: DraggableEvent) => {
-  const feedId = uncollectedFeeds.value[e.newIndex!]!.id
+  const feedId = Number(e.item.dataset.id)
   const collectionId = Number(e.from.dataset.collectionId)
-  console.log(collectionId + ' asdfasdf')
   if (
     (await feedStore.moveFeedOutOfCollection(feedId)) &&
     activeCollection.value?.id == collectionId
@@ -170,7 +173,7 @@ watch(
   [feeds, collections],
   () => {
     uncollectedFeeds.value = feeds.value?.filter((f) => f.collectionId == null) ?? []
-    collectionsFeedMap.value =
+    collectionFeedsMap.value =
       collections.value?.reduce(
         (acc, collection) => {
           acc[collection.id] = feeds.value?.filter((f) => f.collectionId === collection.id) ?? []
@@ -181,16 +184,6 @@ watch(
   },
   { immediate: true },
 )
-
-watch(activeFeed, () => {
-  if (activeFeed.value != null) {
-    const collectionId = idFeedMap.value[activeFeed.value.id]?.collectionId
-    console.log(collectionId)
-    if (collectionId != null) {
-      collectionStore.expandCollection(collectionId)
-    }
-  }
-})
 </script>
 
 <template>
@@ -206,7 +199,7 @@ watch(activeFeed, () => {
       v-for="collection in collections"
       :key="collection.id"
       :collection="collection"
-      v-model:feeds="collectionsFeedMap[collection.id]!"
+      v-model:feeds="collectionFeedsMap[collection.id]!"
       :expanded="expandedCollections.has(collection.id)"
       :active="activeCollection?.id === collection.id"
       :count="collectionCounts[collection.id] ?? 0"

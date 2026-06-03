@@ -60,7 +60,7 @@ watch(itemEvent, async () => {
 
   if (
     newEventFeedId === activeFeed.value?.id ||
-    (!activeCollection && !activeFeed) ||
+    (!activeCollection.value && !activeFeed.value) ||
     collectionStore.isInActiveCollection(newEventFeedId)
   ) {
     await itemStore.getItemsFromAPI(activeFeed.value, activeCollection.value, feedFilter.value, '')
@@ -112,6 +112,9 @@ const handleFeedSelection = (feedId: number) => {
   if (feed) {
     activeFeed.value = feed
     activeCollection.value = null
+    if (feed.collectionId !== null) {
+      collectionStore.expandCollection(feed.collectionId)
+    }
   }
 }
 </script>

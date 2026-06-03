@@ -19,9 +19,10 @@ const itemStore = useItemStore()
 const { activeItem } = itemStore
 
 const feedStore = useFeedStore()
-const { activeFeed, feeds, feedFilter } = feedStore
+const { activeFeed, feeds, feedFilter, idFeedMap } = feedStore
 
-const { activeCollection } = useCollectionStore()
+const collectionStore = useCollectionStore()
+const { activeCollection } = collectionStore
 
 const safeHtml = computed(() => {
   if (activeItem.value) {
@@ -65,6 +66,10 @@ const handleFeedSelection = (feed: Feed | undefined) => {
   if (feed) {
     activeFeed.value = feed
     activeCollection.value = null
+    const collectionId = idFeedMap.value[activeFeed.value.id]?.collectionId
+    if (collectionId !== null && collectionId !== undefined) {
+      collectionStore.expandCollection(collectionId)
+    }
   }
 }
 </script>

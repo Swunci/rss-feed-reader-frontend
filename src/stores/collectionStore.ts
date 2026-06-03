@@ -11,7 +11,7 @@ const activeCollection = ref<Collection | null>(null)
 
 const expandedCollections = ref<Set<number>>(new Set())
 
-const collectionsFeedMap = ref<Record<number, Feed[]>>({})
+const collectionFeedsMap = ref<Record<number, Feed[]>>({})
 
 const {
   data: collections,
@@ -81,7 +81,7 @@ const updateCollection = async (collectionId: number, newName: string) => {
 
 function isInActiveCollection(feedId: number | undefined): boolean {
   if (!activeCollection.value || !feedId) return false
-  return collectionsFeedMap.value[activeCollection.value.id]?.some((f) => f.id === feedId) ?? false
+  return collectionFeedsMap.value[activeCollection.value.id]?.some((f) => f.id === feedId) ?? false
 }
 
 function init() {
@@ -103,7 +103,7 @@ export function useCollectionStore() {
     patchCollectionError,
     loadingDeleteCollection,
     deleteCollectionError,
-    collectionsFeedMap,
+    collectionFeedsMap,
     fetchCollections,
     toggleCollection,
     expandCollection,

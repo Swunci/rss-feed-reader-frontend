@@ -6,7 +6,6 @@ import { usePost } from '../composables/api/usePost'
 import { endpoints } from '@/api/endpoints'
 import { usePatch } from '@/composables/api/usePatch'
 import { normalizeFeedFields } from '@/utils/normalizer'
-import type { DraggableEvent } from 'vue-draggable-plus'
 
 const activeFeed = ref<Feed | null>(null)
 const feedFilter = ref<FeedFilter>('all')
