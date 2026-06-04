@@ -29,6 +29,7 @@ const emit = defineEmits<{
   renameFeed: [feed: Feed]
   deleteFeed: [feed: Feed]
   feedAdded: [e: DraggableEvent, collectionId: number]
+  toggleCollection: [collectionId: number]
 }>()
 
 const localFeeds = defineModel<Feed[]>('feeds', { default: () => [] })
@@ -82,7 +83,11 @@ const onMove = (e: MoveEvent) => {
         :class="['collection-header', active ? 'active' : '']"
         @click="emit('select', collection)"
       >
-        <ChevronsRightIcon :size="14" :class="['collection-chevron', expanded ? 'expanded' : '']" />
+        <ChevronsRightIcon
+          :size="14"
+          :class="['collection-chevron', expanded ? 'expanded' : '']"
+          @click.stop="emit('toggleCollection', collection.id)"
+        />
         <span class="collection-name">{{ collection.name }}</span>
         <span class="feed-count">{{ count }}</span>
         <div class="actions" @click.stop>
@@ -152,6 +157,9 @@ const onMove = (e: MoveEvent) => {
 }
 .collection-chevron.expanded {
   transform: rotate(90deg);
+}
+.collection-chevron:hover {
+  color: #111827;
 }
 .collection-header .actions {
   display: none;

@@ -74,8 +74,8 @@ watch(itemEvent, async () => {
 <template>
   <div class="app-layout">
     <FeedsTab
-      @addFeed="showAddFeedModal = true"
-      @addCollection="showAddCollectionModal = true"
+      @add-feed="showAddFeedModal = true"
+      @add-collection="showAddCollectionModal = true"
       @refresh="handleRefresh"
     />
     <ItemsTab />

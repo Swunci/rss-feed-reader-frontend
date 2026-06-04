@@ -105,7 +105,7 @@ const handleFeedSelection = (feed: Feed | undefined) => {
         </span>
         <div>{{ formatDate(activeItem!.publishedAt) }}</div>
         <hr />
-        <div v-html="safeHtml"></div>
+        <div class="description" v-html="safeHtml"></div>
       </div>
     </div>
   </div>
@@ -152,5 +152,8 @@ const handleFeedSelection = (feed: Feed | undefined) => {
 }
 .feed-name:hover {
   color: #6b7280;
+}
+.description {
+  white-space: pre-wrap;
 }
 </style>

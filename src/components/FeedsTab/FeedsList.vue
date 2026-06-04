@@ -83,8 +83,11 @@ const handleFeedSelection = (feed: Feed) => {
   }
 }
 
+const handleToggleCollection = (collectionId: number) => {
+  collectionStore.toggleCollection(collectionId)
+}
+
 const handleCollectionSelection = (collection: Collection) => {
-  collectionStore.toggleCollection(collection.id)
   activeCollection.value = collection
   activeFeed.value = null
 }
@@ -251,10 +254,11 @@ const onMoveFromUncollected = (e: MoveEvent) => {
       @select="handleCollectionSelection"
       @rename="(c) => openCollectionModal(c, 'rename')"
       @delete="(c) => openCollectionModal(c, 'delete')"
-      @selectFeed="handleFeedSelection"
-      @renameFeed="(f) => openFeedModal(f, 'rename')"
-      @deleteFeed="(f) => openFeedModal(f, 'delete')"
-      @feedAdded="handleMoveIntoCollection"
+      @select-feed="handleFeedSelection"
+      @rename-feed="(f) => openFeedModal(f, 'rename')"
+      @delete-feed="(f) => openFeedModal(f, 'delete')"
+      @feed-added="handleMoveIntoCollection"
+      @toggle-collection="handleToggleCollection"
     />
     <VueDraggable
       v-model="uncollectedFeeds"

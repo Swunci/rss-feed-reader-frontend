@@ -18,7 +18,7 @@ import { useToast } from 'vue-toastification'
 const toast = useToast()
 
 const feedStore = useFeedStore()
-const { activeFeed, feedFilter, idFeedMap } = feedStore
+const { activeFeed, feedFilter, idFeedMap, feeds } = feedStore
 
 const collectionStore = useCollectionStore()
 const { activeCollection } = collectionStore
@@ -96,14 +96,17 @@ const handleSelectItem = async (item: Item) => {
 }
 
 const handleMarkAllRead = async () => {
-  if (activeFeed.value == null) return
-  const count = activeFeed.value.count
-  if (feedFilter.value === 'unread') feedStore.updateFeedItemCount(activeFeed.value.id, -count)
-
-  const { success } = await itemStore.markAllRead()
+  const success = await itemStore.markAllRead()
+  if (success && feedFilter.value === 'unread') {
+    if (activeCollection.value !== null) {
+      const collectionId = activeCollection.value.id
+      feeds.value = feeds.value?.filter((f) => f.collectionId !== collectionId) ?? []
+    } else if (activeFeed.value !== null) {
+      feedStore.updateFeedItemCount(activeFeed.value.id, -activeFeed.value.count)
+    }
+  }
   if (!success) {
     toast.error('Failed to mark all as read')
-    if (feedFilter.value === 'unread') feedStore.updateFeedItemCount(activeFeed.value.id, count)
   }
 }
 
