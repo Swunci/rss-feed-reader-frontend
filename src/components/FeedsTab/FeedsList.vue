@@ -162,7 +162,7 @@ const handleDeleteFeed = async (feedId: number) => {
 
 const handleRenameFeed = async (feedId: number, name: string) => {
   if (await feedStore.renameFeed(feedId, name)) {
-    showDeleteFeedModal.value = false
+    showRenameFeedModal.value = false
   }
 }
 

@@ -17,7 +17,7 @@ const collectionStore = useCollectionStore()
 const { activeCollection, PostCollectionError, loadingPostCollection } = collectionStore
 
 const feedStore = useFeedStore()
-const { activeFeed, loadingPostFeed, postFeedError, feedFilter } = feedStore
+const { feeds, activeFeed, loadingPostFeed, postFeedError, feedFilter } = feedStore
 
 const itemStore = useItemStore()
 const { activeItem, hasMore, items, cursor } = itemStore
@@ -60,6 +60,7 @@ const handleAddCollection = async (name: string) => {
 const handleAddFeed = async (url: string) => {
   if (await feedStore.addFeed(url)) {
     showAddFeedModal.value = false
+    activeFeed.value = feeds.value?.find((f) => f.url == url) ?? activeFeed.value
   }
 }
 

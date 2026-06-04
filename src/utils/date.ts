@@ -7,7 +7,7 @@ export function formatDate(utcString: string) {
     year: 'numeric',
   }).format(date)
 
-  const timePart = new Intl.DateTimeFormat('en-US', {
+  const timePart = new Intl.DateTimeFormat(undefined, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
