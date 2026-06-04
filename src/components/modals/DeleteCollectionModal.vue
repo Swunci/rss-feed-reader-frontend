@@ -9,7 +9,7 @@ defineProps<{
 
 const emit = defineEmits<{
   close: []
-  confirm: [collectionId: number]
+  submit: [collectionId: number]
 }>()
 </script>
 
@@ -24,11 +24,7 @@ const emit = defineEmits<{
       <p v-if="error" class="modal-error">{{ error }}</p>
       <div class="modal-actions">
         <button class="modal-btn cancel" @click="emit('close')">Cancel</button>
-        <button
-          class="modal-btn danger"
-          :disabled="loading"
-          @click="emit('confirm', collection.id)"
-        >
+        <button class="modal-btn danger" :disabled="loading" @click="emit('submit', collection.id)">
           {{ loading ? 'Deleting...' : 'Delete' }}
         </button>
       </div>

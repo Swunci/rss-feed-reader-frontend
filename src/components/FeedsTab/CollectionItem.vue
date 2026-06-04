@@ -4,6 +4,13 @@ import { VueDraggable, type DraggableEvent, type MoveEvent } from 'vue-draggable
 import type { Collection } from '@/types/collection'
 import type { Feed } from '@/types/feed'
 import FeedItem from './FeedItem.vue'
+import { onMounted, ref } from 'vue'
+import {
+  DRAG_INTO_COLLECTION_COLOR,
+  DRAG_INTO_UNCOLLECTED_COLOR,
+  INDENT,
+  UNINDENT,
+} from '@/constants/dragColors.ts'
 
 defineProps<{
   collection: Collection
@@ -26,16 +33,29 @@ const emit = defineEmits<{
 
 const localFeeds = defineModel<Feed[]>('feeds', { default: () => [] })
 
+const collectedRef = ref()
+
+onMounted(() => {
+  collectedRef.value?.$el.addEventListener('dragover', () => {
+    const ghost = document.querySelector('.drag-ghost') as HTMLElement
+    if (!ghost) return
+    ghost.style.paddingLeft = INDENT
+    ghost.style.background = DRAG_INTO_COLLECTION_COLOR
+  })
+})
 const onMove = (e: MoveEvent) => {
+  if (e.related.classList.contains('collection-header') && e.willInsertAfter === false) {
+    return false
+  }
   const ghost = document.querySelector('.drag-ghost') as HTMLElement
+
   if (!ghost) return true
-  console.log('e.to classes:', e.to.classList)
   if (e.to.classList.contains('feed-list')) {
-    ghost.style.paddingLeft = '0.75rem'
-    ghost.style.background = 'red'
+    ghost.style.paddingLeft = UNINDENT
+    ghost.style.background = DRAG_INTO_COLLECTION_COLOR
   } else {
-    ghost.style.paddingLeft = '2rem'
-    ghost.style.background = 'rgb(121, 239, 255)'
+    ghost.style.paddingLeft = INDENT
+    ghost.style.background = DRAG_INTO_UNCOLLECTED_COLOR
   }
   return true
 }
@@ -45,12 +65,13 @@ const onMove = (e: MoveEvent) => {
   <div class="collection-item">
     <VueDraggable
       v-model="localFeeds"
+      ref="collectedRef"
       :sort="false"
       :data-collection-id="collection.id"
-      :swap-threshold="0.1"
       filter=".collection-header"
       :prevent-on-filter="true"
-      :invert-swap="true"
+      :dragover-bubble="true"
+      :animation="150"
       group="feeds"
       @move="onMove"
       ghost-class="drag-ghost"

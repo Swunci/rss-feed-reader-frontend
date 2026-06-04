@@ -12,8 +12,14 @@ import CollectionItem from './CollectionItem.vue'
 import FeedItem from './FeedItem.vue'
 
 import { BookHeartIcon, EyeOffIcon, LayersIcon } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { VueDraggable, type DraggableEvent, type MoveEvent } from 'vue-draggable-plus'
+import {
+  DRAG_INTO_COLLECTION_COLOR,
+  DRAG_INTO_UNCOLLECTED_COLOR,
+  INDENT,
+  UNINDENT,
+} from '@/constants/dragColors.ts'
 
 const collectionStore = useCollectionStore()
 const {
@@ -160,6 +166,7 @@ const handleRenameFeed = async (feedId: number, name: string) => {
 const handleDeleteCollection = async (collectionId: number) => {
   if (await collectionStore.removeCollection(collectionId)) {
     showDeleteCollectionModal.value = false
+    await feedStore.fetchFilteredFeeds()
   }
 }
 
@@ -188,29 +195,38 @@ watch(
   { immediate: true },
 )
 
+const uncollectedRef = ref()
+
+onMounted(() => {
+  uncollectedRef.value?.$el.addEventListener('dragover', () => {
+    const ghost = document.querySelector('.drag-ghost-uncollected') as HTMLElement
+    if (!ghost) return
+    ghost.style.paddingLeft = UNINDENT
+    ghost.style.background = DRAG_INTO_UNCOLLECTED_COLOR
+  })
+})
+
 const sortedCollections = computed(() =>
   [...(collections.value ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
 )
 
 const onMoveFromUncollected = (e: MoveEvent) => {
+  if (e.related.classList.contains('collection-header') && e.willInsertAfter === false) {
+    return false
+  }
   const ghost = document.querySelector('.drag-ghost-uncollected') as HTMLElement
+
   if (!ghost) return true
   console.log('e.from:', e.from.classList)
   console.log('e.to:', e.to.classList)
   if (e.to.classList.contains('draggable-area')) {
-    ghost.style.paddingLeft = '2rem'
-    ghost.style.background = 'rgb(121, 239, 255)'
+    ghost.style.paddingLeft = INDENT
+    ghost.style.background = DRAG_INTO_COLLECTION_COLOR
   } else {
-    ghost.style.paddingLeft = '0.75rem'
-    ghost.style.background = 'red'
+    ghost.style.paddingLeft = UNINDENT
+    ghost.style.background = DRAG_INTO_UNCOLLECTED_COLOR
   }
   return true
-}
-const onDragEnd = (e: DraggableEvent) => {
-  if (e.from === e.to) {
-    ;(e.item as HTMLElement).style.removeProperty('padding-left')
-    ;(e.item as HTMLElement).style.removeProperty('background')
-  }
 }
 </script>
 
@@ -242,12 +258,13 @@ const onDragEnd = (e: DraggableEvent) => {
     />
     <VueDraggable
       v-model="uncollectedFeeds"
+      ref="uncollectedRef"
       :sort="false"
       group="feeds"
       class="feed-list"
       ghost-class="drag-ghost-uncollected"
+      :animation="150"
       @move="onMoveFromUncollected"
-      @end="onDragEnd"
       @add="(e) => handleMoveOutOfCollection(e)"
     >
       <FeedItem
@@ -267,7 +284,7 @@ const onDragEnd = (e: DraggableEvent) => {
     :loading="loadingDeleteCollection"
     :error="deleteCollectionError"
     @close="clearModals"
-    @sumbit="handleDeleteCollection"
+    @submit="handleDeleteCollection"
   />
   <RenameCollectionModal
     v-if="showRenameCollectionModal && activeCollection"
@@ -299,6 +316,8 @@ const onDragEnd = (e: DraggableEvent) => {
 .feed-list {
   overflow-y: auto;
   min-height: 40px;
+  display: flex;
+  flex-direction: column;
 }
 
 .feed-item {
@@ -327,9 +346,7 @@ const onDragEnd = (e: DraggableEvent) => {
 }
 .collection-list {
   overflow-y: auto;
-}
-.dummy-zone {
-  height: 10px;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 </style>
