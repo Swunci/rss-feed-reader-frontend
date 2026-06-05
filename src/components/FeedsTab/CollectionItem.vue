@@ -53,10 +53,10 @@ const onMove = (e: MoveEvent) => {
   if (!ghost) return true
   if (e.to.classList.contains('feed-list')) {
     ghost.style.paddingLeft = UNINDENT
-    ghost.style.background = DRAG_INTO_COLLECTION_COLOR
+    ghost.style.background = DRAG_INTO_UNCOLLECTED_COLOR
   } else {
     ghost.style.paddingLeft = INDENT
-    ghost.style.background = DRAG_INTO_UNCOLLECTED_COLOR
+    ghost.style.background = DRAG_INTO_COLLECTION_COLOR
   }
   return true
 }

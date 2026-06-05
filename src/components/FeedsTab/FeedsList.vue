@@ -220,8 +220,6 @@ const onMoveFromUncollected = (e: MoveEvent) => {
   const ghost = document.querySelector('.drag-ghost-uncollected') as HTMLElement
 
   if (!ghost) return true
-  console.log('e.from:', e.from.classList)
-  console.log('e.to:', e.to.classList)
   if (e.to.classList.contains('draggable-area')) {
     ghost.style.paddingLeft = INDENT
     ghost.style.background = DRAG_INTO_COLLECTION_COLOR

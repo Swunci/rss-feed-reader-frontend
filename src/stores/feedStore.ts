@@ -146,8 +146,8 @@ const moveFeedOutOfCollection = async (feedId: number) => {
   return success
 }
 
-function init() {
-  fetchFeeds(endpoints.feeds.getAll)
+async function init() {
+  await fetchFeeds(endpoints.feeds.getAll)
 }
 
 init()

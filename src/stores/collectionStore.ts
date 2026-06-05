@@ -84,8 +84,8 @@ function isInActiveCollection(feedId: number | undefined): boolean {
   return collectionFeedsMap.value[activeCollection.value.id]?.some((f) => f.id === feedId) ?? false
 }
 
-function init() {
-  fetchCollections(endpoints.collections.getAll)
+async function init() {
+  await fetchCollections(endpoints.collections.getAll)
 }
 
 init()
