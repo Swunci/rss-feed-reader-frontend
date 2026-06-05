@@ -13,6 +13,7 @@ export const endpoints = {
     getFavorite: `${BASE_URL}/feeds?filter=favorite`,
     create: `${BASE_URL}/feeds`,
     refreshAll: `${BASE_URL}/feeds/refresh`,
+    discover: `${BASE_URL}/feeds/discover`,
     removeCollection: (id: number) => `${BASE_URL}/feeds/${id}/unassign`,
     refreshFeed: (id: number) => `${BASE_URL}/feeds/${id}/refresh`,
     delete: (id: number) => `${BASE_URL}/feeds/${id}`,

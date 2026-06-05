@@ -1,3 +1,5 @@
+import FeedItem from '@/components/FeedsTab/FeedItem.vue'
+
 export type Feed = {
   id: number
   name: string
@@ -15,3 +17,8 @@ export type FeedAPI = {
 }
 
 export type FeedFilter = 'all' | 'unread' | 'favorite'
+
+export type DiscoverFeed = {
+  name: string
+  url: string
+}

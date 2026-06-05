@@ -1,4 +1,4 @@
-import { type FeedFilter, type Feed, type FeedAPI } from '@/types/feed'
+import { type FeedFilter, type Feed, type FeedAPI, type DiscoverFeed } from '@/types/feed'
 import { computed, ref } from 'vue'
 import { useDelete } from '../composables/api/useDelete'
 import { useFetch } from '../composables/api/useFetch'
@@ -36,6 +36,12 @@ const {
   error: postFeedError,
   postData: postFeed,
 } = usePost<Feed>()
+const {
+  data: discoveredFeeds,
+  loading: discoverLoading,
+  error: discoverError,
+  postData: postDiscoverFeeds,
+} = usePost<DiscoverFeed[]>()
 
 const { loading: loadingPatchFeed, error: patchFeedError, patchData: patchFeed } = usePatch()
 const { loading: loadingDeleteFeed, error: deleteFeedError, deleteData: deleteFeed } = useDelete()
@@ -65,13 +71,17 @@ const updateFeedItemCount = (feed_id: number, value: number) => {
   }
 }
 
-const addFeed = async (feedUrl: string) => {
-  const success = await postFeed(endpoints.feeds.create, { url: feedUrl })
+const addFeed = async (feedUrl: string, name: string) => {
+  const success = await postFeed(endpoints.feeds.create, { url: feedUrl, name })
   if (success) {
     console.log(`Created feed ${JSON.stringify(feed.value)}`)
     await fetchFilteredFeeds()
   }
   return success
+}
+
+const discoverFeeds = async (feedUrl: string) => {
+  return await postDiscoverFeeds(endpoints.feeds.discover, { url: feedUrl })
 }
 
 const removeFeed = async (feedId: number) => {
@@ -157,6 +167,9 @@ export function useFeedStore() {
     patchFeedError,
     uncollectedFeeds,
     idFeedMap,
+    discoveredFeeds,
+    discoverLoading,
+    discoverError,
     addFeed,
     removeFeed,
     refreshFeeds,
@@ -165,5 +178,6 @@ export function useFeedStore() {
     moveFeedOutOfCollection,
     updateFeedItemCount,
     fetchFilteredFeeds,
+    discoverFeeds,
   }
 }

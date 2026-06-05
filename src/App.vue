@@ -17,7 +17,16 @@ const collectionStore = useCollectionStore()
 const { activeCollection, PostCollectionError, loadingPostCollection } = collectionStore
 
 const feedStore = useFeedStore()
-const { feeds, activeFeed, loadingPostFeed, postFeedError, feedFilter } = feedStore
+const {
+  feeds,
+  activeFeed,
+  loadingPostFeed,
+  postFeedError,
+  feedFilter,
+  discoveredFeeds,
+  discoverLoading,
+  discoverError,
+} = feedStore
 
 const itemStore = useItemStore()
 const { activeItem, hasMore, items, cursor } = itemStore
@@ -25,6 +34,7 @@ const { activeItem, hasMore, items, cursor } = itemStore
 const showAddCollectionModal = ref(false)
 
 const showAddFeedModal = ref(false)
+const showDiscoverFeedOptions = ref(false)
 
 const handleRefresh = async () => {
   await feedStore.refreshFeeds()
@@ -49,6 +59,8 @@ const clearAddModal = () => {
   postFeedError.value = null
   showAddCollectionModal.value = false
   PostCollectionError.value = null
+  showDiscoverFeedOptions.value = false
+  discoverError.value = null
 }
 
 const handleAddCollection = async (name: string) => {
@@ -57,9 +69,19 @@ const handleAddCollection = async (name: string) => {
   }
 }
 
-const handleAddFeed = async (url: string) => {
-  if (await feedStore.addFeed(url)) {
+const handleSubmitFeed = async (url: string) => {
+  await feedStore.discoverFeeds(url)
+  if (discoveredFeeds.value && discoveredFeeds.value.length > 0) {
+    showDiscoverFeedOptions.value = true
+  } else {
+    await handleAddFeed(url)
+  }
+}
+
+const handleAddFeed = async (url: string, name: string = '') => {
+  if (await feedStore.addFeed(url, name)) {
     showAddFeedModal.value = false
+    showDiscoverFeedOptions.value = false
     activeFeed.value = feeds.value?.find((f) => f.url == url) ?? activeFeed.value
   }
 }
@@ -83,10 +105,15 @@ watch(itemEvent, async () => {
     <ItemContent v-if="activeItem" />
     <AddFeedModal
       v-if="showAddFeedModal"
-      :loading="loadingPostFeed"
-      :error="postFeedError"
+      :loading-post-feed="loadingPostFeed"
+      :post-feed-error="postFeedError"
+      :loading-discover-options="discoverLoading"
+      :discover-error="discoverError"
+      :show-options="showDiscoverFeedOptions"
+      :discovered-feeds="discoveredFeeds ?? []"
       @close="clearAddModal"
-      @submit="handleAddFeed"
+      @add="handleAddFeed"
+      @submit="handleSubmitFeed"
     />
     <AddCollectionModal
       v-if="showAddCollectionModal"
