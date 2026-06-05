@@ -14,12 +14,6 @@ import FeedItem from './FeedItem.vue'
 import { BookHeartIcon, EyeOffIcon, LayersIcon } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { VueDraggable, type DraggableEvent, type MoveEvent } from 'vue-draggable-plus'
-import {
-  DRAG_INTO_COLLECTION_COLOR,
-  DRAG_INTO_UNCOLLECTED_COLOR,
-  INDENT,
-  UNINDENT,
-} from '@/constants/dragColors.ts'
 
 const collectionStore = useCollectionStore()
 const {
@@ -202,10 +196,10 @@ const uncollectedRef = ref()
 
 onMounted(() => {
   uncollectedRef.value?.$el.addEventListener('dragover', () => {
-    const ghost = document.querySelector('.drag-ghost-uncollected') as HTMLElement
+    const ghost = document.querySelector('.drag-ghost') as HTMLElement
     if (!ghost) return
-    ghost.style.paddingLeft = UNINDENT
-    ghost.style.background = DRAG_INTO_UNCOLLECTED_COLOR
+    ghost.classList.add('not-in-collection')
+    ghost.classList.remove('in-collection')
   })
 })
 
@@ -216,16 +210,6 @@ const sortedCollections = computed(() =>
 const onMoveFromUncollected = (e: MoveEvent) => {
   if (e.related.classList.contains('collection-header') && e.willInsertAfter === false) {
     return false
-  }
-  const ghost = document.querySelector('.drag-ghost-uncollected') as HTMLElement
-
-  if (!ghost) return true
-  if (e.to.classList.contains('draggable-area')) {
-    ghost.style.paddingLeft = INDENT
-    ghost.style.background = DRAG_INTO_COLLECTION_COLOR
-  } else {
-    ghost.style.paddingLeft = UNINDENT
-    ghost.style.background = DRAG_INTO_UNCOLLECTED_COLOR
   }
   return true
 }
@@ -264,7 +248,7 @@ const onMoveFromUncollected = (e: MoveEvent) => {
       :sort="false"
       group="feeds"
       class="feed-list"
-      ghost-class="drag-ghost-uncollected"
+      ghost-class="drag-ghost"
       :animation="150"
       @move="onMoveFromUncollected"
       @add="(e) => handleMoveOutOfCollection(e)"
@@ -350,5 +334,14 @@ const onMoveFromUncollected = (e: MoveEvent) => {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+}
+.drag-ghost.in-collection {
+  padding-left: 2rem;
+  background: #dcfce7;
+}
+
+.drag-ghost.not-in-collection {
+  padding-left: 0.75rem;
+  background: #fee2e2;
 }
 </style>

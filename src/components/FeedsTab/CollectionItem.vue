@@ -5,12 +5,6 @@ import type { Collection } from '@/types/collection'
 import type { Feed } from '@/types/feed'
 import FeedItem from './FeedItem.vue'
 import { onMounted, ref } from 'vue'
-import {
-  DRAG_INTO_COLLECTION_COLOR,
-  DRAG_INTO_UNCOLLECTED_COLOR,
-  INDENT,
-  UNINDENT,
-} from '@/constants/dragColors.ts'
 
 defineProps<{
   collection: Collection
@@ -40,23 +34,13 @@ onMounted(() => {
   collectedRef.value?.$el.addEventListener('dragover', () => {
     const ghost = document.querySelector('.drag-ghost') as HTMLElement
     if (!ghost) return
-    ghost.style.paddingLeft = INDENT
-    ghost.style.background = DRAG_INTO_COLLECTION_COLOR
+    ghost.classList.add('in-collection')
+    ghost.classList.remove('not-in-collection')
   })
 })
-const onMove = (e: MoveEvent) => {
+const onMoveFromCollection = (e: MoveEvent) => {
   if (e.related.classList.contains('collection-header') && e.willInsertAfter === false) {
     return false
-  }
-  const ghost = document.querySelector('.drag-ghost') as HTMLElement
-
-  if (!ghost) return true
-  if (e.to.classList.contains('feed-list')) {
-    ghost.style.paddingLeft = UNINDENT
-    ghost.style.background = DRAG_INTO_UNCOLLECTED_COLOR
-  } else {
-    ghost.style.paddingLeft = INDENT
-    ghost.style.background = DRAG_INTO_COLLECTION_COLOR
   }
   return true
 }
@@ -74,7 +58,7 @@ const onMove = (e: MoveEvent) => {
       :dragover-bubble="true"
       :animation="150"
       group="feeds"
-      @move="onMove"
+      @move="onMoveFromCollection"
       ghost-class="drag-ghost"
       class="draggable-area"
       @add="(e) => emit('feedAdded', e, collection.id)"
@@ -193,5 +177,15 @@ const onMove = (e: MoveEvent) => {
 }
 .rename-btn:hover {
   color: #111827;
+}
+
+.drag-ghost.in-collection {
+  padding-left: 2rem;
+  background: #dcfce7;
+}
+
+.drag-ghost.not-in-collection {
+  padding-left: 0.75rem;
+  background: #fee2e2;
 }
 </style>
