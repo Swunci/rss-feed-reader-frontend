@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import axios from 'axios'
+import log from '@/utils/logger'
 
 export function useFetch<T, R = T>(transform?: (data: T) => R) {
   const data = ref<R | null>(null)
@@ -13,7 +14,7 @@ export function useFetch<T, R = T>(transform?: (data: T) => R) {
       const response = await axios.get<T>(url)
       data.value = transform ? transform(response.data) : (response.data as unknown as R)
     } catch (err) {
-      console.log(err)
+      log.error('Fetch error', { url, err })
       if (axios.isAxiosError(err)) {
         error.value = err.response?.data?.message || err.message
       } else {

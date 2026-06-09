@@ -10,6 +10,7 @@ import { useItemSSE } from './composables/api/useItemSSE'
 import AddCollectionModal from './components/modals/AddCollectionModal.vue'
 import { useCollectionStore } from './stores/collectionStore'
 import { ref, watch } from 'vue'
+import log from './utils/logger.ts'
 
 useItemSSE()
 
@@ -91,7 +92,7 @@ const handleAddFeed = async (url: string, name: string = '') => {
 const { itemEvent } = useItemSSE()
 
 watch(itemEvent, async () => {
-  console.log('Updating feeds counts')
+  log.debug('SSE item event received, refreshing feed counts')
   await feedStore.fetchFilteredFeeds()
 })
 </script>

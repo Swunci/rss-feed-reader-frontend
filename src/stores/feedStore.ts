@@ -6,6 +6,7 @@ import { usePost } from '../composables/api/usePost'
 import { endpoints } from '@/api/endpoints'
 import { usePatch } from '@/composables/api/usePatch'
 import { normalizeFeedFields } from '@/utils/normalizer'
+import log from '@/utils/logger'
 
 const activeFeed = ref<Feed | null>(null)
 const feedFilter = ref<FeedFilter>('all')
@@ -47,9 +48,7 @@ const { loading: loadingPatchFeed, error: patchFeedError, patchData: patchFeed }
 const { loading: loadingDeleteFeed, error: deleteFeedError, deleteData: deleteFeed } = useDelete()
 
 const fetchFilteredFeeds = async () => {
-  console.log(
-    `fetchFilteredFeeds -> filter: ${feedFilter.value}, activeFeed: ${JSON.stringify(activeFeed.value)}`,
-  )
+  log.debug('Fetch filtered feeds', { filter: feedFilter.value, activeFeed: activeFeed.value?.id })
   switch (feedFilter.value) {
     case 'unread':
       await fetchFeeds(endpoints.feeds.getUnread)
@@ -74,7 +73,7 @@ const updateFeedItemCount = (feed_id: number, value: number) => {
 const addFeed = async (feedUrl: string, name: string) => {
   const success = await postFeed(endpoints.feeds.create, { url: feedUrl, name })
   if (success) {
-    console.log(`Created feed ${JSON.stringify(feed.value)}`)
+    log.debug('Feed added', { url: feedUrl, name })
     await fetchFilteredFeeds()
   }
   return success
@@ -87,6 +86,7 @@ const discoverFeeds = async (feedUrl: string) => {
 const removeFeed = async (feedId: number) => {
   const success = await deleteFeed(endpoints.feeds.delete(feedId))
   if (success) {
+    log.debug('Feed removed', { feedId })
     feeds.value = feeds.value?.filter((f) => f.id !== feedId) ?? []
     activeFeed.value = null
   }
@@ -96,6 +96,7 @@ const removeFeed = async (feedId: number) => {
 const renameFeed = async (feedId: number, newName: string) => {
   const success = await patchFeed(endpoints.feeds.update(feedId), { name: newName })
   if (success) {
+    log.debug('Feed renamed', { feedId, newName })
     feeds.value = feeds.value!.map((f) => {
       if (f.id === feedId) {
         f.name = newName
@@ -109,17 +110,16 @@ const renameFeed = async (feedId: number, newName: string) => {
 const refreshFeeds = async () => {
   const success = await postFeed(endpoints.feeds.refreshAll, {})
   if (success) {
-    console.log('polling new items successful')
+    log.debug('Feeds refreshed')
     await fetchFilteredFeeds()
   }
   return success
 }
 
 const moveFeedIntoCollection = async (feedId: number, collectionId: number) => {
-  console.log(`Add feed (${feedId}) to collection (${collectionId})`)
+  log.debug('Move feed into collection', { feedId, collectionId })
   const success = await patchFeed(endpoints.feeds.update(feedId), { collection_id: collectionId })
   if (success) {
-    console.log(`Feed to collection success`)
     feeds.value =
       feeds.value?.map((f) => {
         if (f.id === feedId) {
@@ -134,7 +134,7 @@ const moveFeedIntoCollection = async (feedId: number, collectionId: number) => {
 const moveFeedOutOfCollection = async (feedId: number) => {
   const success = await deleteFeed(endpoints.feeds.removeCollection(feedId))
   if (success) {
-    console.log(`Feed removed from collection`)
+    log.debug('Feed removed from collection', { feedId })
     feeds.value =
       feeds.value?.map((f) => {
         if (f.id === feedId) {

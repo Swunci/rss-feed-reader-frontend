@@ -14,6 +14,7 @@ import Fuse from 'fuse.js'
 import { useCollectionStore } from '@/stores/collectionStore'
 import { useItemSSE } from '@/composables/api/useItemSSE.ts'
 import { useToast } from 'vue-toastification'
+import log from '@/utils/logger.ts'
 
 const toast = useToast()
 
@@ -57,7 +58,7 @@ watch([activeSelection, feedFilter], async () => {
 
 watch(itemEvent, async () => {
   const newEventFeedId = itemEvent.value?.feedId
-
+  log.debug('SSE item event', { newEventFeedId, activeFeedId: activeFeed.value?.id })
   if (
     newEventFeedId === activeFeed.value?.id ||
     (!activeCollection.value && !activeFeed.value) ||

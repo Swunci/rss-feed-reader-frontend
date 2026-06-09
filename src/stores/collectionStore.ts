@@ -6,6 +6,7 @@ import { usePost } from '@/composables/api/usePost'
 import type { Collection } from '@/types/collection'
 import type { Feed } from '@/types/feed'
 import { ref } from 'vue'
+import log from '@/utils/logger'
 
 const activeCollection = ref<Collection | null>(null)
 
@@ -49,6 +50,7 @@ const expandCollection = (collectionId: number) => {
 const addCollection = async (name: string) => {
   const success = await postCollection(endpoints.collections.create, { name: name })
   if (success) {
+    log.debug('Collection added', { name })
     await fetchCollections(endpoints.collections.getAll)
   }
   return success
@@ -57,6 +59,7 @@ const addCollection = async (name: string) => {
 const removeCollection = async (collectionId: number) => {
   const success = await deleteCollection(endpoints.collections.delete(collectionId))
   if (success) {
+    log.debug('Collection removed', { collectionId })
     collections.value = collections.value?.filter((c) => c.id !== collectionId) ?? []
     activeCollection.value = null
   }
@@ -68,6 +71,7 @@ const updateCollection = async (collectionId: number, newName: string) => {
     name: newName,
   })
   if (success) {
+    log.debug('Collection updated', { collectionId, newName })
     collections.value =
       collections.value?.map((c) => {
         if (c.id === collectionId) {

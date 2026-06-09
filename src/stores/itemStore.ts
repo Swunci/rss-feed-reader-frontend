@@ -7,6 +7,7 @@ import { usePatch } from '../composables/api/usePatch'
 import { endpoints } from '@/api/endpoints'
 
 import type { Collection } from '@/types/collection'
+import log from '@/utils/logger'
 
 const activeItem = ref<Item | null>(null)
 const items = ref<Item[]>([])
@@ -29,7 +30,7 @@ const getItemsFromAPI = async (
   cursorVal: string,
 ) => {
   if (activeFeed !== null) {
-    console.log('filter: %s, activeFeed: %s', feedFilter, JSON.stringify(activeFeed))
+    log.debug('Fetch items by feed', { filter: feedFilter, feedId: activeFeed.id })
     switch (feedFilter) {
       case 'unread':
         await fetchItems(endpoints.items.getUnreadByFeed(activeFeed.id, cursorVal))
@@ -41,7 +42,10 @@ const getItemsFromAPI = async (
         await fetchItems(endpoints.items.getByFeed(activeFeed.id, cursorVal))
     }
   } else if (activeCollection !== null) {
-    console.log('filter: %s, activeCollection: %s', feedFilter, JSON.stringify(activeCollection))
+    log.debug('Fetch items by collection', {
+      filter: feedFilter,
+      collectionId: activeCollection.id,
+    })
     switch (feedFilter) {
       case 'unread':
         await fetchItems(endpoints.items.getUnreadByCollection(activeCollection.id, cursorVal))
@@ -53,7 +57,7 @@ const getItemsFromAPI = async (
         await fetchItems(endpoints.items.getByCollection(activeCollection.id, cursorVal))
     }
   } else {
-    console.log('filter: %s', feedFilter)
+    log.debug('Fetch all items', { filter: feedFilter })
     switch (feedFilter) {
       case 'unread':
         await fetchItems(endpoints.items.getAllUnreadItems(cursorVal))
@@ -82,7 +86,7 @@ const appendNewItems = () => {
       return
     }
     cursor.value = fetchedItems.value.at(-1)!.publishedAt
-    console.log(`updating cursor ${cursor.value}`)
+    log.debug('Cursor updated', { cursor: cursor.value })
   }
 }
 
@@ -135,6 +139,7 @@ const toggleFavorite = async () => {
 
 const markAllRead = async () => {
   const unreadItemIDs = new Set(items.value?.filter((i) => !i.isRead).map((i) => i.id))
+  log.debug('Mark all read', { count: unreadItemIDs.size })
   items.value?.forEach((i) => (i.isRead = true))
   const success = await patchItemAllRead(endpoints.items.markAllRead, {
     item_ids: [...unreadItemIDs],
