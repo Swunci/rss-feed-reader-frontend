@@ -37,8 +37,10 @@ const showAddFeedModal = ref(false)
 const showDiscoverFeedOptions = ref(false)
 
 const handleRefresh = async () => {
-  await feedStore.refreshFeeds()
-  handleRefreshItems()
+  const success = await feedStore.refreshFeeds()
+  if (success) {
+    await handleRefreshItems()
+  }
 }
 
 const handleRefreshItems = async () => {
