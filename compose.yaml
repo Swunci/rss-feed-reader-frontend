@@ -1,9 +1,0 @@
-services:
-  server:
-    image: swunci/rss-feed-frontend:latest
-    build:
-      context: .
-    environment:
-      NODE_ENV: production
-    ports:
-      - 38472:80

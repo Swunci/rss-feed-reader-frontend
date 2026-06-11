@@ -26,13 +26,7 @@ git clone https://github.com/Swunci/rss-feed-reader-frontend.git
 cd rss-feed-frontend
 ```
 
-2. Copy the example env file and configure it:
-
-```bash
-cp .env.example .env
-```
-
-3. Install dependencies and start the dev server:
+2. Install dependencies and start the dev server:
 
 ```bash
 npm install
@@ -43,11 +37,7 @@ npm run dev
 
 ### Docker
 
-```bash
-docker compose up --build -d
-```
-
-The frontend will be available at `http://localhost:38472`. Expects the backend to be running at the URL configured in your env.
+See the [rss-feed-reader-backend](https://github.com/Swunci/rss-feed-reader-backend) README for instructions on running the full stack with Docker Compose.
 
 ---
 
