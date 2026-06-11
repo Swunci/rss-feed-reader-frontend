@@ -14,6 +14,8 @@ const items = ref<Item[]>([])
 const cursor = ref<string>('')
 const hasMore = ref<boolean>(true)
 
+const paginationLimit = 50
+
 const {
   data: fetchedItems,
   loading: itemsLoading,
@@ -33,13 +35,15 @@ const getItemsFromAPI = async (
     log.debug('Fetch items by feed', { filter: feedFilter, feedId: activeFeed.id })
     switch (feedFilter) {
       case 'unread':
-        await fetchItems(endpoints.items.getUnreadByFeed(activeFeed.id, cursorVal))
+        await fetchItems(endpoints.items.getUnreadByFeed(activeFeed.id, cursorVal, paginationLimit))
         break
       case 'favorite':
-        await fetchItems(endpoints.items.getFavoriteByFeed(activeFeed.id, cursorVal))
+        await fetchItems(
+          endpoints.items.getFavoriteByFeed(activeFeed.id, cursorVal, paginationLimit),
+        )
         break
       default:
-        await fetchItems(endpoints.items.getByFeed(activeFeed.id, cursorVal))
+        await fetchItems(endpoints.items.getByFeed(activeFeed.id, cursorVal, paginationLimit))
     }
   } else if (activeCollection !== null) {
     log.debug('Fetch items by collection', {
@@ -48,25 +52,31 @@ const getItemsFromAPI = async (
     })
     switch (feedFilter) {
       case 'unread':
-        await fetchItems(endpoints.items.getUnreadByCollection(activeCollection.id, cursorVal))
+        await fetchItems(
+          endpoints.items.getUnreadByCollection(activeCollection.id, cursorVal, paginationLimit),
+        )
         break
       case 'favorite':
-        await fetchItems(endpoints.items.getFavoriteByCollection(activeCollection.id, cursorVal))
+        await fetchItems(
+          endpoints.items.getFavoriteByCollection(activeCollection.id, cursorVal, paginationLimit),
+        )
         break
       default:
-        await fetchItems(endpoints.items.getByCollection(activeCollection.id, cursorVal))
+        await fetchItems(
+          endpoints.items.getByCollection(activeCollection.id, cursorVal, paginationLimit),
+        )
     }
   } else {
     log.debug('Fetch all items', { filter: feedFilter })
     switch (feedFilter) {
       case 'unread':
-        await fetchItems(endpoints.items.getAllUnreadItems(cursorVal))
+        await fetchItems(endpoints.items.getAllUnreadItems(cursorVal, paginationLimit))
         break
       case 'favorite':
-        await fetchItems(endpoints.items.getAllFavoriteItems(cursorVal))
+        await fetchItems(endpoints.items.getAllFavoriteItems(cursorVal, paginationLimit))
         break
       default:
-        await fetchItems(endpoints.items.getAllItems(cursorVal))
+        await fetchItems(endpoints.items.getAllItems(cursorVal, paginationLimit))
     }
   }
 }
