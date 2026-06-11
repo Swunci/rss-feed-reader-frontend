@@ -1,48 +1,69 @@
-# rss-feed-frontend
+## Description
 
-This template should help get you started developing with Vue 3 in Vite.
+A Vue 3 frontend for [rss-feed-backend](https://github.com/Swunci/rss-feed-backend). Can be run standalone in development, paired with the backend via Docker, or bundled as a single Windows executable.
+
+---
+
+## Features
+
+- Organize feeds into collections via drag-and-drop
+- Fuzzy search across items list
+- Filter items by unread or favorited status
+- Infinite scroll for items list
+- Newly fetched items appear automatically in active list without refreshing
+- Mark items as read or favorite
+
+---
+
+## How to Run
+
+### Development
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/Swunci/rss-feed-frontend.git
+cd rss-feed-frontend
+```
+
+2. Copy the example env file and configure it:
+
+```bash
+cp .env.example .env
+```
+
+3. Install dependencies and start the dev server:
+
+```bash
+npm install
+npm run dev
+```
+
+---
+
+### Docker
+
+```bash
+docker compose up --build -d
+```
+
+The frontend will be available at `http://localhost:38472`. Expects the backend to be running at the URL configured in your env.
+
+---
+
+### Windows Executable
+
+See the [rss-feed-backend](https://github.com/Swunci/rss-feed-backend) README for instructions on building and running the bundled desktop executable.
+
+---
 
 ## Recommended IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
-## Recommended Browser Setup
+**Vue DevTools**
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+- Chrome/Edge/Brave: [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
+- Firefox: [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
 
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+---
