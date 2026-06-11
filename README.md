@@ -1,6 +1,6 @@
 ## Description
 
-A Vue 3 frontend for [rss-feed-backend](https://github.com/Swunci/rss-feed-backend). Can be run standalone in development, paired with the backend via Docker, or bundled as a single Windows executable.
+A Vue 3 frontend for [rss-feed-reader-backend](https://github.com/Swunci/rss-feed-reader-backend). Can be run standalone in development, paired with the backend via Docker, or bundled as a single Windows executable.
 
 ---
 
@@ -22,7 +22,7 @@ A Vue 3 frontend for [rss-feed-backend](https://github.com/Swunci/rss-feed-backe
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/Swunci/rss-feed-frontend.git
+git clone https://github.com/Swunci/rss-feed-reader-frontend.git
 cd rss-feed-frontend
 ```
 
@@ -53,7 +53,7 @@ The frontend will be available at `http://localhost:38472`. Expects the backend 
 
 ### Windows Executable
 
-See the [rss-feed-backend](https://github.com/Swunci/rss-feed-backend) README for instructions on building and running the bundled desktop executable.
+See the [rss-feed-reader-backend](https://github.com/Swunci/rss-feed-reader-backend) README for instructions on building and running the bundled desktop executable.
 
 ---
 
