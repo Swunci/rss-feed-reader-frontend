@@ -38,9 +38,10 @@ const {
 } = useDelete()
 
 const toggleCollection = (collectionId: number) => {
-  expandedCollections.value.has(collectionId)
-    ? expandedCollections.value.delete(collectionId)
-    : expandedCollections.value.add(collectionId)
+  if (expandedCollections.value.has(collectionId)) expandedCollections.value.delete(collectionId)
+  else {
+    expandedCollections.value.add(collectionId)
+  }
 }
 
 const expandCollection = (collectionId: number) => {
